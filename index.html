@@ -341,12 +341,50 @@
   .map-container-wrap{
     flex:1 1 50%;
     min-width:0;
+    position:relative;
   }
   #surfMap{
     height:320px;
     width:100%;
     border-radius:12px;
     border:1px solid var(--border);
+  }
+  .wind-swell-compass{
+    position:absolute;
+    top:8px;
+    right:8px;
+    z-index:1000;
+    display:flex;
+    gap:10px;
+    background:rgba(255,255,255,0.88);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:6px 10px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.25);
+    pointer-events:none;
+  }
+  .compass-item{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+  }
+  .compass-arrow{
+    width:26px;
+    height:26px;
+    display:block;
+    transition:transform .2s ease;
+  }
+  .compass-label{
+    font-size:0.62rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.02em;
+    color:var(--muted);
+  }
+  @media (max-width:700px){
+    .wind-swell-compass{ top:6px; right:6px; padding:5px 8px; gap:8px; }
+    .compass-arrow{ width:22px; height:22px; }
   }
   @media (max-width:700px){
     .map-row{flex-direction:column;}
@@ -580,7 +618,26 @@
     </div>
     <div class="map-row">
       <div class="map-feature" id="mapFeature"></div>
-      <div class="map-container-wrap"><div id="surfMap"></div></div>
+      <div class="map-container-wrap">
+        <div id="surfMap"></div>
+        <div class="wind-swell-compass" id="windSwellCompass" title="Pilene viser retningen vind og svell beveger seg mot (ikke hvor de kommer fra)">
+          <div class="compass-item">
+            <svg class="compass-arrow" id="compassSwellArrow" viewBox="0 0 48 48">
+              <path d="M24,40 C16,36 32,32 24,28 C16,24 32,20 24,16" fill="none" stroke="#0f5f8c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M24,6 L31,18 L24,14 L17,18 Z" fill="#0f5f8c"/>
+            </svg>
+            <span class="compass-label">Svell</span>
+          </div>
+          <div class="compass-item">
+            <svg class="compass-arrow" id="compassWindArrow" viewBox="0 0 48 48">
+              <line x1="24" y1="40" x2="24" y2="16" stroke="#e04b3f" stroke-width="4" stroke-linecap="round"/>
+              <line x1="24" y1="38" x2="32" y2="31" stroke="#e04b3f" stroke-width="4" stroke-linecap="round"/>
+              <path d="M24,6 L31,18 L24,14 L17,18 Z" fill="#e04b3f"/>
+            </svg>
+            <span class="compass-label">Vind</span>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="map-legend">
       <span><span class="dot" style="background:var(--good)"></span>Anbefalt</span>
@@ -908,6 +965,14 @@ function updateArrows(){
   const windDeg = parseFloat(document.getElementById("inWindDir").value);
   document.getElementById("swellArrow").style.transform = `rotate(${swellDeg}deg)`;
   document.getElementById("windArrow").style.transform = `rotate(${windDeg}deg)`;
+  updateMapCompass(swellDeg, windDeg);
+}
+function updateMapCompass(swellDeg, windDeg){
+  // Kompasset på kartet viser hvilken vei vind/svell beveger seg (motsatt av "fra"-retningen over).
+  const swellEl = document.getElementById("compassSwellArrow");
+  const windEl = document.getElementById("compassWindArrow");
+  if(swellEl && !isNaN(swellDeg)) swellEl.style.transform = `rotate(${(swellDeg+180)%360}deg)`;
+  if(windEl && !isNaN(windDeg)) windEl.style.transform = `rotate(${(windDeg+180)%360}deg)`;
 }
 
 function readInputsToCondition(){
