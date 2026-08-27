@@ -579,10 +579,11 @@
         <option value="all">Vis alle</option>
         <optgroup label="Nivå">
           <option value="level:1">★☆☆☆☆ – kun nybegynner</option>
-          <option value="level:2">t.o.m. ★★☆☆☆</option>
-          <option value="level:3">t.o.m. ★★★☆☆</option>
-          <option value="level:4">t.o.m. ★★★★☆</option>
-          <option value="level:5">Alle nivåer</option>
+          <option value="level:2">★★☆☆☆</option>
+          <option value="level:3">★★★☆☆</option>
+          <option value="level:4">★★★★☆</option>
+          <option value="level:5">★★★★★</option>
+          <option value="level:all">Alle nivåer</option>
         </optgroup>
         <optgroup label="Bølgehøyde">
           <option value="height:up">Over 2m</option>
@@ -856,7 +857,10 @@ function stars(level){
 function spotMatchesFilter(spot, filterValue){
   if(!filterValue || filterValue === "all") return true;
   const [type, val] = filterValue.split(":");
-  if(type === "level") return spot.level <= parseInt(val, 10);
+  if(type === "level"){
+    if(val === "all") return true;
+    return spot.level === parseInt(val, 10);
+  }
   if(type === "height"){
     // "Over 2m": spots capped at 2m or less are excluded (need hMax strictly above 2m).
     if(val === "up") return spot.hMax > 2;
