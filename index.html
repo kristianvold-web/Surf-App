@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jæren Surfeguide</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  :root{
+    --sea-dark:#0a3d5c;
+    --sea:#0f5f8c;
+    --sea-light:#3d8fb0;
+    --sand:#e8c9a0;
+    --sand-dark:#c9a874;
+    --foam:#f4f9fb;
+    --good:#1e9e6a;
+    --good-bg:#e4f7ee;
+    --ok:#c98a1a;
+    --ok-bg:#fbf0dc;
+    --bad:#b5462f;
+    --bad-bg:#fbe9e5;
+    --closed:#6b6b6b;
+    --closed-bg:#ececec;
+    --text:#1c2b33;
+    --muted:#5c7382;
+    --card:#ffffff;
+    --border:#dce7ec;
+    --shadow:0 2px 10px rgba(10,61,92,0.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(180deg,var(--sea-dark) 0%, var(--sea) 220px, var(--foam) 220px);
+    color:var(--text);
+    min-height:100vh;
+  }
+  header{
+    max-width:980px;
+    margin:0 auto;
+    padding:36px 20px 20px;
+    color:#fff;
+  }
+  header h1{
+    margin:0 0 4px;
+    font-size:1.9rem;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  header p{
+    margin:0;
+    color:#cfe6f2;
+    font-size:0.95rem;
+  }
+  .wrap{
+    max-width:980px;
+    margin:0 auto;
+    padding:0 20px 60px;
+  }
+  .panel{
+    background:var(--card);
+    border-radius:16px;
+    box-shadow:var(--shadow);
+    padding:20px 22px;
+    margin-top:-40px;
+    margin-bottom:22px;
+    border:1px solid var(--border);
+  }
+  .panel h2{
+    margin:0 0 14px;
+    font-size:1.05rem;
+    color:var(--sea-dark);
+  }
+  .cond-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:14px;
+    margin-bottom:14px;
+  }
+  .cond-box{
+    background:var(--foam);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 14px;
+  }
+  .cond-box label{
+    display:block;
+    font-size:0.72rem;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .cond-box .row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .cond-box input, .cond-box select{
+    width:100%;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:6px 8px;
+    font-size:0.95rem;
+    background:#fff;
+    color:var(--text);
+  }
+  .arrow{
+    display:inline-block;
+    width:16px;height:16px;
+    flex:0 0 auto;
+    transition:transform .2s ease;
+  }
+  .status-line{
+    font-size:0.85rem;
+    color:var(--muted);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .btn{
+    border:none;
+    border-radius:9px;
+    padding:9px 16px;
+    font-size:0.9rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:opacity .15s ease;
+  }
+  .btn:hover{opacity:0.88;}
+  .btn-primary{background:var(--sea);color:#fff;}
+  .btn-ghost{background:transparent;color:var(--sea);border:1px solid var(--sea-light);}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
+  .legend{
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    font-size:0.8rem;
+    color:var(--muted);
+    margin-top:14px;
+    border-top:1px dashed var(--border);
+    padding-top:12px;
+  }
+  .legend strong{color:var(--text);}
+  .filters{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+  .filters label{font-size:0.85rem;color:var(--muted);display:flex;align-items:center;gap:6px;}
+  select#spotFilter{border:1px solid var(--border);border-radius:8px;padding:5px 8px;}
+  .filter-divider{
+    grid-column:1 / -1;
+    height:3px;
+    background:var(--bad);
+    border:none;
+    border-radius:2px;
+    margin:2px 0 10px;
+  }
+  .card.filtered-out{opacity:0.55;}
+  .spot-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+    gap:16px;
+  }
+  .card{
+    background:var(--card);
+    border-radius:14px;
+    border:1px solid var(--border);
+    box-shadow:var(--shadow);
+    padding:16px 18px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    position:relative;
+  }
+  .card.dim{opacity:0.55;}
+  .card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:8px;
+  }
+  .card-top h3{
+    margin:0;
+    font-size:1.08rem;
+    color:var(--sea-dark);
+  }
+  .stars{color:var(--sand-dark);font-size:0.8rem;letter-spacing:1px;}
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    font-size:0.72rem;
+    font-weight:700;
+    padding:3px 9px;
+    border-radius:999px;
+    white-space:nowrap;
+  }
+  .badge-great{background:var(--good-bg);color:var(--good);}
+  .badge-ok{background:var(--ok-bg);color:var(--ok);}
+  .badge-bad{background:var(--bad-bg);color:var(--bad);}
+  .badge-closed{background:var(--closed-bg);color:var(--closed);}
+  .type-tag{
+    font-size:0.68rem;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    color:var(--sea);
+    background:#eaf3f8;
+    padding:2px 7px;
+    border-radius:6px;
+    font-weight:600;
+  }
+  .meter{
+    height:6px;
+    background:#e6edf1;
+    border-radius:99px;
+    overflow:hidden;
+  }
+  .meter > div{height:100%;border-radius:99px;}
+  .facts{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:6px 14px;
+    font-size:0.82rem;
+    color:var(--muted);
+  }
+  .facts b{color:var(--text);font-weight:600;}
+  .comment{font-size:0.85rem;color:var(--text);line-height:1.4;}
+  .where{font-size:0.78rem;color:var(--muted);line-height:1.4;border-top:1px dashed var(--border);padding-top:8px;}
+  .where a{color:var(--sea);text-decoration:none;font-weight:600;}
+  .where a:hover{text-decoration:underline;}
+  .where button.link-btn{
+    background:none;border:none;padding:0;margin:0;
+    font:inherit;color:var(--sea);text-decoration:none;font-weight:600;
+    cursor:pointer;
+  }
+  .where button.link-btn:hover{text-decoration:underline;}
+  .why{font-size:0.76rem;color:var(--muted);}
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:0.78rem;
+    padding:10px 20px 40px;
+  }
+  .err{
+    background:var(--bad-bg);
+    color:var(--bad);
+    border-radius:10px;
+    padding:10px 14px;
+    font-size:0.85rem;
+    margin-top:10px;
+    display:none;
+  }
+  @media (max-width:600px){
+    header{padding-top:26px;}
+    .panel{margin-top:-28px;}
+  }
+
+  .map-panel .panel-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .map-panel h2{margin:0;}
+  .map-type-toggle{
+    display:inline-flex;
+    border:1px solid var(--sea-light);
+    border-radius:9px;
+    overflow:hidden;
+  }
+  .map-type-btn{
+    border:none;
+    background:transparent;
+    color:var(--sea);
+    padding:9px 14px;
+    font-size:0.9rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .map-type-btn + .map-type-btn{border-left:1px solid var(--sea-light);}
+  .map-type-btn.active{background:var(--sea);color:#fff;}
+  .map-type-btn:hover:not(.active){background:var(--foam);}
+  .map-row{
+    display:flex;
+    gap:16px;
+    align-items:stretch;
+  }
+  .map-feature{
+    flex:1 1 50%;
+    min-width:0;
+    background:var(--foam);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px 16px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .map-feature-label{
+    font-size:0.72rem;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--muted);
+    font-weight:700;
+  }
+  .map-feature .where{border-top:none;padding-top:0;}
+  .map-feature .btn-show-best{align-self:flex-start;}
+  .map-container-wrap{
+    flex:1 1 50%;
+    min-width:0;
+  }
+  #surfMap{
+    height:320px;
+    width:100%;
+    border-radius:12px;
+    border:1px solid var(--border);
+  }
+  @media (max-width:700px){
+    .map-row{flex-direction:column;}
+  }
+  .map-legend{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    font-size:0.78rem;
+    color:var(--muted);
+    margin-top:10px;
+    align-items:center;
+  }
+  .map-legend .dot{
+    display:inline-block;
+    width:10px;height:10px;
+    border-radius:50%;
+    margin-right:5px;
+    vertical-align:middle;
+  }
+  .map-legend .dot.approx{border:2px dashed var(--muted); background:transparent; width:8px; height:8px;}
+  .spot-marker{
+    width:18px;height:18px;
+    border-radius:50%;
+    border:2px solid #fff;
+    box-shadow:0 1px 4px rgba(0,0,0,0.35);
+    cursor:pointer;
+  }
+  .spot-marker.approx{border-style:dashed; border-width:2px;}
+  .spot-marker.unknown{opacity:0.55;}
+  .leaflet-popup-content b{color:var(--sea-dark);}
+  .edit-panel{
+    display:none;
+    margin-top:12px;
+    background:var(--foam);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px 14px;
+  }
+  .edit-panel.show{display:block;}
+  .edit-panel p{margin:0 0 8px;font-size:0.82rem;color:var(--muted);}
+  .edit-panel textarea{
+    width:100%;
+    min-height:110px;
+    font-family:ui-monospace,Menlo,Consolas,monospace;
+    font-size:0.75rem;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px;
+    resize:vertical;
+  }
+  .card.card-highlight{
+    outline:3px solid var(--sea-light);
+    outline-offset:2px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌊 Jæren Surfeguide</h1>
+  <p>Foreslår hvilke spotter som kan fungere ut fra vind og bølger akkurat nå.</p>
+</header>
+
+<div class="wrap">
+
+  <div class="panel">
+    <h2>Forhold akkurat nå</h2>
+    <div class="cond-grid">
+      <div class="cond-box">
+        <label>Bølgehøyde (swell), m</label>
+        <input type="number" id="inHeight" step="0.1" min="0" max="10">
+      </div>
+      <div class="cond-box">
+        <label>Bølgeperiode, s</label>
+        <input type="number" id="inPeriod" step="0.5" min="0" max="25">
+      </div>
+      <div class="cond-box">
+        <label>Svellretning (fra)</label>
+        <div class="row">
+          <svg class="arrow" id="swellArrow" viewBox="0 0 24 24"><path d="M12 2 L18 14 L12 10.5 L6 14 Z" fill="#0f5f8c"/></svg>
+          <select id="inSwellDir"></select>
+        </div>
+      </div>
+      <div class="cond-box">
+        <label>Vindstyrke, m/s</label>
+        <input type="number" id="inWindSpeed" step="0.5" min="0" max="40">
+      </div>
+      <div class="cond-box">
+        <label>Vindretning (fra)</label>
+        <div class="row">
+          <svg class="arrow" id="windArrow" viewBox="0 0 24 24"><path d="M12 2 L18 14 L12 10.5 L6 14 Z" fill="#c98a1a"/></svg>
+          <select id="inWindDir"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-line">
+      <span id="statusText">Henter live data …</span>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="btnFetch">🔄 Hent live data</button>
+        <button class="btn btn-primary" id="btnCalc">Beregn anbefaling</button>
+      </div>
+    </div>
+    <div class="err" id="errBox"></div>
+
+    <div class="legend">
+      <span><strong>BB</strong> = Beachbreak (sandbunn)</span>
+      <span><strong>PB</strong> = Pointbreak (nes/odde)</span>
+      <span><strong>rev</strong> = Reef (stein/rev)</span>
+      <span><strong>★</strong>-skala: ★☆☆☆☆ nybegynner → ★★★★★ kun ekspert</span>
+    </div>
+  </div>
+
+  <div class="panel map-panel">
+    <div class="panel-head">
+      <h2>🗺️ Kart over spottene</h2>
+      <div class="btn-row">
+        <div class="map-type-toggle" role="group" aria-label="Karttype">
+          <button type="button" class="map-type-btn active" id="btnMapStreet">🗺️ Kart</button>
+          <button type="button" class="map-type-btn" id="btnMapSat">🛰️ Satellitt</button>
+        </div>
+        <button class="btn btn-ghost" id="btnEditPositions">✏️ Rediger posisjoner</button>
+      </div>
+    </div>
+    <div class="map-row">
+      <div class="map-feature" id="mapFeature"></div>
+      <div class="map-container-wrap"><div id="surfMap"></div></div>
+    </div>
+    <div class="map-legend">
+      <span><span class="dot" style="background:var(--good)"></span>Anbefalt</span>
+      <span><span class="dot" style="background:var(--ok)"></span>Mulig</span>
+      <span><span class="dot" style="background:var(--bad)"></span>Ikke ideelt</span>
+      <span><span class="dot" style="background:var(--closed)"></span>Stengt</span>
+      <span><span class="dot approx"></span>Anslått posisjon – klikk «Rediger posisjoner» for å dra pin til riktig sted</span>
+    </div>
+    <div class="edit-panel" id="editPanel">
+      <p>Dra pins til riktig sted på kartet. Trykk «Kopier koordinater» og lim inn svaret i chatten, så oppdaterer jeg spot-dataene permanent.</p>
+      <div class="btn-row" style="margin-bottom:8px;">
+        <button class="btn btn-ghost" id="btnCopyCoords">📋 Kopier koordinater</button>
+        <button class="btn btn-ghost" id="btnResetCoords">↺ Nullstill</button>
+      </div>
+      <textarea id="coordOutput" readonly></textarea>
+    </div>
+  </div>
+
+  <div class="filters">
+    <label>Filter:
+      <select id="spotFilter">
+        <option value="all">Vis alle</option>
+        <optgroup label="Nivå">
+          <option value="level:1">★☆☆☆☆ – kun nybegynner</option>
+          <option value="level:2">t.o.m. ★★☆☆☆</option>
+          <option value="level:3">t.o.m. ★★★☆☆</option>
+          <option value="level:4">t.o.m. ★★★★☆</option>
+          <option value="level:5">Alle nivåer</option>
+        </optgroup>
+        <optgroup label="Bølgehøyde">
+          <option value="height:up">Over 2m</option>
+          <option value="height:down">Under 2m</option>
+        </optgroup>
+        <optgroup label="Posisjon">
+          <option value="pos:north">Nord for Reve</option>
+          <option value="pos:south">Sør for Reve</option>
+        </optgroup>
+        <optgroup label="Sortering">
+          <option value="sort:ns">Fra nord til sør</option>
+        </optgroup>
+      </select>
+    </label>
+    <label><input type="checkbox" id="hideClosed"> Flytt stengte spotter under streken</label>
+  </div>
+
+  <div class="spot-grid" id="spotGrid"></div>
+
+  <footer>
+    Data om spottene er hentet fra din egen Surfeguide – Jæren. Vind/bølgedata: Open-Meteo (gratis, ingen nøkkel).
+    Modellene har grov oppløsning langs kysten, så bruk dette som en pekepinn – ikke fasit. Sjekk alltid forholdene selv før du drar ut.
+  </footer>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ---------------------------------------------------------------
+   1) SPOT-DATABASE — hentet direkte fra Surfeguide_Jaeren_6.docx
+------------------------------------------------------------------*/
+const SPOTS = [
+  {name:"Bore", type:"BB", level:1, swell:"W–NW", wind:"Ø–SØ", hMin:0.5,hMax:2, tide:"Alle", comment:"Mest populære spot på Jæren.", where:"Borestranda, Klepp kommune – hovedstranden midt på Jæren, sør for Sola og Sandnes.", lat:58.7991, lng:5.5487, approx:false},
+  {name:"Hellestø", type:"BB", level:1, swell:"SW–W", wind:"Ø–SØ", hMin:0.5,hMax:2, tide:"Alle", comment:"Tåler store dønninger godt.", where:"Hellestøstranden, ca. 5 minutters kjøring sør for Sola, mellom Sola og Bore.", lat:58.8423, lng:5.5608, approx:false},
+  {name:"Solastranden", type:"BB", level:1, swell:"W–NW", wind:"Ø", hMin:0.5,hMax:2, tide:"Alle", comment:"Fin spot ved mindre svell.", where:"Solastranden, Sola kommune – ved Sola strandhotell, nord-Jæren.", lat:58.8886, lng:5.6011, approx:false},
+  {name:"Point Seldom", type:"PB/rev", level:4, swell:"W–SW", wind:"Ø–NE", hMin:1,hMax:2.5, tide:"Midt–høy", comment:"Sørenden av Solastranden. Lang høyre når den fungerer. Fungerer sjelden.", where:"Sørenden av Solastranden. Kjør ut på venstre side av stranden, følg veien til den slutter.", lat:58.8771, lng:5.5872, approx:false},
+  {name:"Vigdel", type:"BB", level:1, swell:"W–NW", wind:"Ø", hMin:0.5,hMax:2, tide:"Lav–midt", comment:"Kan være ren når Solastranden er rotete.", where:"Vigdelstranden, ytterst på Sola-halvøya, sør for Ølberg (kyststien Sola–Ølberg–Vigdel).", lat:58.8607, lng:5.5583, approx:false},
+  {name:"Ølberg", type:"BB", level:2, swell:"W", wind:"Ø", hMin:0.5,hMax:2, tide:"Midt", comment:"Beskyttet ved mindre svell.", where:"Ølberg havn, mellom Solastranden og Vigdel.", lat:58.8688, lng:5.5664, approx:false},
+  {name:"Reve", type:"BB", level:4, swell:"W", wind:"Ø–SØ", hMin:1,hMax:2.5, tide:"Alle", comment:"God allround-spot.", where:"Reve, Klepp kommune, ved Revtangen (Jærens vestligste punkt), mellom Orre og Bore.", lat:58.7529, lng:5.4874, approx:false},
+  {name:"Orre", type:"BB", level:1, swell:"W–NW", wind:"Ø–SØ", hMin:0.5,hMax:2, tide:"Alle", comment:"Lange sandbanker.", where:"Orrestranda, Klepp kommune – Norges lengste sandstrand.", lat:58.7408, lng:5.5091, approx:false},
+  {name:"Point Perfect", type:"PB", level:3, swell:"SW", wind:"NE", hMin:1,hMax:4, tide:"Midt–høy", comment:"Lang høyrebølge. Krever riktig svell.", where:"Ved Refsnes, helt i nordenden av flystripen.", lat:58.6992, lng:5.5344, approx:false},
+  {name:"Brusand", type:"BB", level:1, swell:"SW–W", wind:"Ø–SØ", hMin:0.5,hMax:2, tide:"Alle", comment:"God ved større svell.", where:"Brusand, Hå kommune, sør for Kvassheim.", lat:58.5313, lng:5.759, approx:false},
+  {name:"Ogna", type:"BB", level:1, swell:"SW", wind:"Ø–SØ", hMin:0.5,hMax:2, tide:"Alle", comment:"Kan bli svært bra om høsten.", where:"Ogna, Hå kommune, nord for Sirevåg.", lat:58.513, lng:5.7937, approx:false},
+  {name:"Kvassheim", type:"PB", level:5, swell:"S–SW", wind:"NE", hMin:1.5,hMax:4, tide:"Midt–høy", comment:"Kraftig høyrebølge over stein.", where:"Rett nord for Kvassheim fyr, Hå kommune, mellom Brusand og Nærland.", lat:58.549, lng:5.6707, approx:false},
+  {name:"Refsnes", type:"BB", level:1, swell:"SW–W", wind:"Ø", hMin:0.5,hMax:2, tide:"Midt", comment:"Roligere enn de mest populære spottene.", where:"Refsnes, midt på flystripa, mellom Orre og Kvassheim-området.", lat:58.6881, lng:5.5484, approx:false},
+  {name:"Svinastien (Pigsty)", type:"rev", level:5, swell:"WSW–NW", wind:"Ø–SØ", hMin:1.5,hMax:4, tide:"Midt–høy", comment:"Kraftige bølger over stein.", where:"Sør for Reve havn – «world class»-bølger for erfarne lokale.", lat:58.7505, lng:5.4896, approx:false},
+  {name:"Valhall", type:"Rev", level:3, swell:"W–NW", wind:"Ø–NE", hMin:1.5,hMax:3, tide:"Midt–høy", comment:"Lokal spot. Kraftige vegger når forholdene stemmer.", where:"Sør for fyret på Kvassheim.", lat:58.5408, lng:5.6835, approx:false},
+  {name:"Boblå", type:"rev", level:5, swell:"W–NW", wind:"Ø", hMin:1.5,hMax:4, tide:"Midt", comment:"Hollow og rask. Kun for erfarne.", where:"Nord for Reve havn – «crowded» rev-spot for erfarne.", lat:58.7756, lng:5.5213, approx:false},
+  {name:"Secrets", type:"rev", level:5, swell:"W–NW", wind:"Ø–SØ", hMin:1.5,hMax:3, tide:"Varierer", comment:"Lite dokumentert. Lokalkunnskap viktig.", where:"Ikke dokumentert offentlig. Lokalkunnskap kreves for å finne den.", lat:58.7, lng:5.55, approx:true, unknownPos:true},
+  {name:"Byberg (Bybergstranda)", type:"PB", level:3, swell:"SW", wind:"Ø–SW", hMin:1.5,hMax:3, tide:"Midt–høy", comment:"Historisk sted – her surfet man først på Jæren, tidlig 80-tall.", where:"Sørenden av Hellestøstranden. Avkjøring fra R510, ca. 1 km etter Statoil-stasjonen på Tjelta.", breakDir:"Venstre/høyre", lat:58.8338, lng:5.5518, approx:false},
+  {name:"Sele", type:"PB", level:2, swell:"NW", wind:"NW–NE–Ø", hMin:1,hMax:3, tide:"Midt–høy", comment:"Bunn av stein/sand.", where:"Sør for Sola/Tjelta. Fra bomstasjonen: høyre rett etter bommen, deretter venstre ved veiskille ca. 2 km videre.", breakDir:"Høyre", lat:58.8137, lng:5.5435, approx:false},
+  {name:"Toveisbukta", type:"PB", level:2, swell:"S–NW", wind:"Ø–SØ", hMin:1.5,hMax:3, tide:"Midt–høy", comment:"Der rullesteinene begynner, helt i sørenden av Bore.", where:"Surfes på venstre side av holmen Fuglingen, sørenden av Borestranda.", breakDir:"Høyre/venstre", lat:58.7867, lng:5.5382, approx:false},
+  {name:"Steinen", type:"PB", level:3, swell:"S–NW", wind:"Ø–SØ/S", hMin:1.5,hMax:4, tide:"Midt–høy", comment:"Mest kjent for en smooth venstre, men kan gi kort intens høyre.", where:"Ca. 75 m sørvest for Toveisbukta.", breakDir:"Venstre/høyre", lat:58.7833, lng:5.5348, approx:false},
+  {name:"Reve Havn", type:"PB", level:4, swell:"W–NW", wind:"SW–SØ", hMin:1.5,hMax:4, tide:"Midt–høy", comment:"Manges første møte med et pointbreak.", where:"Ved Reve båthavn.", breakDir:"Høyre", lat:58.7728, lng:5.5158, approx:false},
+  {name:"Reve sør", type:"PB", level:3, swell:"W–NW", wind:"S–SØ–Ø", hMin:1,hMax:2.5, tide:"Midt–høy", comment:"Surfeforbud 1.10–31.3 (fuglefredning).", where:"Sørsiden av Reve båthavn.", breakDir:"Venstre/høyre", closedSeason:true, lat:58.771, lng:5.5102, approx:false},
+  {name:"Orre pointet sør", type:"PB", level:3, swell:"SW–W", wind:"NE–Ø", hMin:1,hMax:3, tide:"Midt–høy", comment:"Surfeforbud 1.10–31.3 (fuglefredning).", where:"Sørenden av Orrestranden. Parker ved Friluftshuset.", breakDir:"Høyre/venstre", closedSeason:true, lat:58.7335, lng:5.5105, approx:false},
+  {name:"Spot X", type:"PB", level:3, swell:"S–W", wind:"SØ–Ø–NE", hMin:1.5,hMax:3, tide:"Midt–høy", comment:"Populær også for brettseiling og kiting.", where:"Ca. 2 km sør for Orre, mellom fotballbane og skogsholt. Ta til høyre ved sjøen (100 m).", breakDir:"Høyre/venstre", lat:58.7278, lng:5.515, approx:false},
+  {name:"Spot Y", type:"PB", level:3, swell:"S–W", wind:"SØ–Ø–NE", hMin:2,hMax:4, tide:"Midt–høy", comment:"Kraftigere enn Spot X. Populær for brettseiling.", where:"Samme sted som Spot X, men ta til venstre ved sjøen (100 m).", breakDir:"Venstre", lat:58.7255, lng:5.5172, approx:false},
+  {name:"Prestegården", type:"PB", level:3, swell:"SW", wind:"Ø–SØ", hMin:2,hMax:3, tide:"Midt–høy", comment:"Venstrebølge.", where:"Ved Hå gamle prestegård, følg skilt.", breakDir:"Venstre", lat:58.6658, lng:5.5466, approx:false},
+];
+
+/* ---------------------------------------------------------------
+   2) RETNINGS-PARSING (norske/engelske himmelretninger -> grader)
+------------------------------------------------------------------*/
+const DIR = {
+  N:0, NNE:22.5, NNØ:22.5, NE:45, NØ:45, ENE:67.5, ENØ:67.5, E:90, Ø:90,
+  ESE:112.5, ESØ:112.5, SE:135, SØ:135, SSE:157.5, SSØ:157.5, S:180,
+  SSW:202.5, SSV:202.5, SW:225, SV:225, WSW:247.5, VSV:247.5, W:270, V:270,
+  WNW:292.5, VNV:292.5, NW:315, NV:315, NNW:337.5, NNV:337.5
+};
+const DIR_OPTIONS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+// Norske/blandede forkortelser i kildedataen -> engelsk (kun for visning, ikke for beregning)
+const TO_EN = {
+  N:"N", NNE:"NNE", NNØ:"NNE", NE:"NE", NØ:"NE", ENE:"ENE", ENØ:"ENE", E:"E", Ø:"E",
+  ESE:"ESE", ESØ:"ESE", SE:"SE", SØ:"SE", SSE:"SSE", SSØ:"SSE", S:"S",
+  SSW:"SSW", SSV:"SSW", SW:"SW", SV:"SW", WSW:"WSW", VSV:"WSW", W:"W", V:"W",
+  WNW:"WNW", VNV:"WNW", NW:"NW", NV:"NW", NNW:"NNW", NNV:"NNW"
+};
+
+function tokenToDeg(tok){
+  tok = tok.trim().toUpperCase();
+  return DIR.hasOwnProperty(tok) ? DIR[tok] : null;
+}
+// Oversetter en retningsstreng som "Ø–SØ" eller "NW–NE–Ø" til engelske forkortelser for visning
+function toEnglishDir(str){
+  return str.split(/[–\-]/).map(seg=>{
+    return seg.split("/").map(s=>{
+      const tok = s.trim().toUpperCase();
+      return TO_EN.hasOwnProperty(tok) ? TO_EN[tok] : s.trim();
+    }).join("/");
+  }).join("–");
+}
+// Bygger liste av [start,end] buer (i grader) fra en streng som "W–NW" eller "SØ–Ø–NE"
+function buildArcs(str){
+  const parts = str.split(/[–\-]/).map(s=>tokenToDeg(s)).filter(d=>d!==null);
+  if(parts.length===0) return [];
+  if(parts.length===1) return [[parts[0],parts[0]]];
+  const arcs=[];
+  for(let i=0;i<parts.length-1;i++){
+    let a=parts[i], b=parts[i+1];
+    let diff = ((b-a+540)%360)-180; // korteste vei, -180..180
+    if(diff>=0) arcs.push([a,(a+diff)%360]);
+    else arcs.push([(a+diff+360)%360,a]);
+  }
+  return arcs;
+}
+function angularDistanceToArcs(deg, arcs){
+  if(arcs.length===0) return 999;
+  let best = 999;
+  for(const [start,end] of arcs){
+    const arcLen = ((end-start)+360)%360;
+    const rel = ((deg-start)+360)%360;
+    if(rel<=arcLen){ best = 0; break; }
+    const distToStart = Math.min(rel, 360-rel);
+    const relEnd = ((deg-end)+360)%360;
+    const distToEnd = Math.min(relEnd, 360-relEnd);
+    best = Math.min(best, distToStart, distToEnd);
+  }
+  return best;
+}
+function scoreFromDistance(dist, falloff){
+  return Math.max(0, 1 - dist/falloff);
+}
+
+/* ---------------------------------------------------------------
+   3) SCORING
+------------------------------------------------------------------*/
+function scoreHeight(hs, min, max){
+  if(hs===null || isNaN(hs)) return 0.5;
+  if(hs>=min && hs<=max) return 1;
+  if(hs<min) return Math.max(0, 1-(min-hs)/0.6);
+  return Math.max(0, 1-(hs-max)/1.0);
+}
+function computeScore(spot, cond){
+  const now = new Date();
+  const month = now.getMonth()+1;
+  const closedNow = !!spot.closedSeason && (month>=10 || month<=3);
+
+  const swellArcs = buildArcs(spot.swell);
+  const windArcs = buildArcs(spot.wind);
+
+  const swellDist = cond.swellDir===null ? 999 : angularDistanceToArcs(cond.swellDir, swellArcs);
+  const swellScore = cond.swellDir===null ? 0.5 : scoreFromDistance(swellDist, 40);
+
+  const windDist = cond.windDir===null ? 999 : angularDistanceToArcs(cond.windDir, windArcs);
+  const windDirScore = cond.windDir===null ? 0.5 : scoreFromDistance(windDist, 35);
+
+  let speedFactor = 1;
+  if(cond.windSpeed!==null && !isNaN(cond.windSpeed)){
+    if(windDirScore>=0.6){
+      speedFactor = clamp(1 - Math.max(0,cond.windSpeed-14)/12, 0.3, 1);
+    } else {
+      speedFactor = clamp(1 - cond.windSpeed/15, 0.15, 1);
+    }
+  }
+  const windScore = windDirScore*speedFactor;
+  const heightScore = scoreHeight(cond.height, spot.hMin, spot.hMax);
+
+  const overall = clamp(0.35*swellScore + 0.35*windScore + 0.30*heightScore, 0, 1);
+
+  return {overall, swellScore, windScore, heightScore, closedNow};
+}
+function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
+
+/* ---------------------------------------------------------------
+   4) LIVE DATA — Open-Meteo (gratis, ingen nøkkel, CORS-vennlig)
+------------------------------------------------------------------*/
+const LAT = 58.73, LON = 5.57; // representativt punkt, sentralt på Jæren (Reve/Bore)
+let condition = {height:null, period:null, swellDir:null, windSpeed:null, windDir:null};
+
+async function fetchLiveConditions(){
+  const statusEl = document.getElementById("statusText");
+  const errEl = document.getElementById("errBox");
+  errEl.style.display="none";
+  statusEl.textContent = "Henter live data …";
+  try{
+    const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&current=swell_wave_height,swell_wave_direction,swell_wave_period,wave_height&timezone=Europe%2FOslo`;
+    const windUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=wind_speed_10m,wind_direction_10m&wind_speed_unit=ms&timezone=Europe%2FOslo`;
+
+    const [marineRes, windRes] = await Promise.all([fetch(marineUrl), fetch(windUrl)]);
+    if(!marineRes.ok || !windRes.ok) throw new Error("Nettverksfeil mot Open-Meteo");
+    const marine = await marineRes.json();
+    const wind = await windRes.json();
+
+    const mc = marine.current || {};
+    const wc = wind.current || {};
+
+    condition.height = (mc.swell_wave_height ?? mc.wave_height ?? null);
+    condition.period = (mc.swell_wave_period ?? null);
+    condition.swellDir = (mc.swell_wave_direction ?? null);
+    condition.windSpeed = (wc.wind_speed_10m ?? null);
+    condition.windDir = (wc.wind_direction_10m ?? null);
+
+    fillInputsFromCondition();
+    statusEl.textContent = "Sist oppdatert: " + new Date().toLocaleTimeString("no-NO",{hour:"2-digit",minute:"2-digit"}) + " (Open-Meteo, sentralt punkt på Jæren)";
+    render();
+  }catch(e){
+    statusEl.textContent = "Klarte ikke hente live data.";
+    errEl.style.display="block";
+    errEl.textContent = "Kunne ikke hente værdata akkurat nå (nettverk/CORS?). Du kan fylle inn forholdene manuelt under og trykke «Beregn anbefaling». Feil: " + e.message;
+  }
+}
+
+function fillInputsFromCondition(){
+  if(condition.height!==null) document.getElementById("inHeight").value = round1(condition.height);
+  if(condition.period!==null) document.getElementById("inPeriod").value = round1(condition.period);
+  if(condition.windSpeed!==null) document.getElementById("inWindSpeed").value = round1(condition.windSpeed);
+  if(condition.swellDir!==null) selectClosestDir("inSwellDir", condition.swellDir);
+  if(condition.windDir!==null) selectClosestDir("inWindDir", condition.windDir);
+  updateArrows();
+}
+function round1(n){ return Math.round(n*10)/10; }
+
+/* ---------------------------------------------------------------
+   5) UI-oppsett
+------------------------------------------------------------------*/
+function populateDirSelects(){
+  ["inSwellDir","inWindDir"].forEach(id=>{
+    const sel = document.getElementById(id);
+    sel.innerHTML="";
+    DIR_OPTIONS.forEach(opt=>{
+      const o = document.createElement("option");
+      o.value = DIR[opt];
+      o.textContent = `${opt} (${DIR[opt]}°)`;
+      sel.appendChild(o);
+    });
+  });
+}
+function selectClosestDir(id, deg){
+  const sel = document.getElementById(id);
+  let best=null, bestDiff=999;
+  for(const opt of sel.options){
+    const d = parseFloat(opt.value);
+    const diff = Math.min(Math.abs(d-deg), 360-Math.abs(d-deg));
+    if(diff<bestDiff){bestDiff=diff; best=opt;}
+  }
+  if(best) sel.value = best.value;
+}
+function updateArrows(){
+  const swellDeg = parseFloat(document.getElementById("inSwellDir").value);
+  const windDeg = parseFloat(document.getElementById("inWindDir").value);
+  document.getElementById("swellArrow").style.transform = `rotate(${swellDeg}deg)`;
+  document.getElementById("windArrow").style.transform = `rotate(${windDeg}deg)`;
+}
+
+function readInputsToCondition(){
+  return {
+    height: parseFloat(document.getElementById("inHeight").value),
+    period: parseFloat(document.getElementById("inPeriod").value),
+    swellDir: parseFloat(document.getElementById("inSwellDir").value),
+    windSpeed: parseFloat(document.getElementById("inWindSpeed").value),
+    windDir: parseFloat(document.getElementById("inWindDir").value),
+  };
+}
+
+function badgeFor(score, closedNow){
+  if(closedNow) return {cls:"badge-closed", label:"⛔ Stengt (fuglefredning)"};
+  if(score>=0.72) return {cls:"badge-great", label:"🟢 Anbefalt"};
+  if(score>=0.45) return {cls:"badge-ok", label:"🟡 Mulig"};
+  return {cls:"badge-bad", label:"🔴 Ikke ideelt"};
+}
+function barColor(score){
+  if(score>=0.72) return "var(--good)";
+  if(score>=0.45) return "var(--ok)";
+  return "var(--bad)";
+}
+function stars(level){
+  return "★".repeat(level) + "☆".repeat(5-level);
+}
+
+// value like "level:3", "height:up", "pos:south", or "all"
+function spotMatchesFilter(spot, filterValue){
+  if(!filterValue || filterValue === "all") return true;
+  const [type, val] = filterValue.split(":");
+  if(type === "level") return spot.level <= parseInt(val, 10);
+  if(type === "height"){
+    // "Over 2m": spots capped at 2m or less are excluded (need hMax strictly above 2m).
+    if(val === "up") return spot.hMax > 2;
+    // "Under 2m": show spots that can handle at least up to 2m.
+    if(val === "down") return spot.hMax >= 2;
+  }
+  if(type === "pos"){
+    const reve = SPOTS.find(s=>s.name === "Reve");
+    if(!reve) return true;
+    if(val === "north") return spot.lat > reve.lat;
+    if(val === "south") return spot.lat < reve.lat;
+  }
+  return true;
+}
+function buildCard(spot, result, isFilteredOut){
+  const badge = badgeFor(result.overall, result.closedNow);
+  const card = document.createElement("div");
+  card.className = "card" + (result.closedNow ? " dim":"") + (isFilteredOut ? " filtered-out":"");
+  card.id = "card-" + slug(spot.name);
+  card.innerHTML = `
+    <div class="card-top">
+      <div>
+        <h3>${spot.name}</h3>
+        <div class="stars">${stars(spot.level)}</div>
+      </div>
+      <span class="badge ${badge.cls}">${badge.label}</span>
+    </div>
+    <div>
+      <span class="type-tag">${spot.type}</span>
+      ${spot.breakDir ? `<span class="type-tag">${spot.breakDir}</span>` : ""}
+    </div>
+    <div class="meter"><div style="width:${Math.round(result.overall*100)}%; background:${barColor(result.overall)};"></div></div>
+    <div class="facts">
+      <div><b>Beste svell:</b> ${toEnglishDir(spot.swell)}</div>
+      <div><b>Beste vind:</b> ${toEnglishDir(spot.wind)}</div>
+      <div><b>Bølgehøyde:</b> ${spot.hMin}–${spot.hMax} m</div>
+      <div><b>Tidevann:</b> ${spot.tide}</div>
+    </div>
+    <div class="comment">${spot.comment}</div>
+    <div class="why">Treff: svell ${pct(result.swellScore)} · vind ${pct(result.windScore)} · høyde ${pct(result.heightScore)}</div>
+    <div class="where">📍 ${spot.where} · <button type="button" class="link-btn" onclick="focusMapOnSpot('${slug(spot.name)}')">🗺️ Vis i kart</button></div>
+  `;
+  return card;
+}
+function render(){
+  const cond = readInputsToCondition();
+  const filterValue = document.getElementById("spotFilter").value;
+  const hideClosed = document.getElementById("hideClosed").checked;
+  const isSortMode = filterValue.startsWith("sort:");
+
+  const scoredAll = SPOTS.map(spot=>({spot, result: computeScore(spot, cond)}));
+
+  const sortFn = (a,b)=>{
+    if(a.result.closedNow !== b.result.closedNow) return a.result.closedNow ? 1 : -1;
+    return b.result.overall - a.result.overall;
+  };
+  // Pure geography, north (higher latitude) first - no closedNow reshuffling,
+  // since the point is to see every spot laid out along the coast in order.
+  const geoSortFn = (a,b)=> b.spot.lat - a.spot.lat;
+  const activeSort = isSortMode ? geoSortFn : sortFn;
+
+  const kept = [], demoted = [];
+  for(const item of scoredAll){
+    const passes = (isSortMode || spotMatchesFilter(item.spot, filterValue)) && !(hideClosed && item.result.closedNow);
+    (passes ? kept : demoted).push(item);
+  }
+  kept.sort(activeSort);
+  demoted.sort(activeSort);
+
+  const grid = document.getElementById("spotGrid");
+  grid.innerHTML="";
+  for(const {spot, result} of kept) grid.appendChild(buildCard(spot, result, false));
+  if(kept.length && demoted.length){
+    const divider = document.createElement("div");
+    divider.className = "filter-divider";
+    grid.appendChild(divider);
+  }
+  for(const {spot, result} of demoted) grid.appendChild(buildCard(spot, result, true));
+
+  updateMapMarkers(scoredAll);
+  renderMapFeature(scoredAll);
+}
+function pct(v){ return Math.round(v*100)+"%"; }
+function slug(name){
+  return name.toLowerCase()
+    .replace(/[øö]/g,"o").replace(/[åä]/g,"a").replace(/æ/g,"ae")
+    .replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+}
+
+/* ---------------------------------------------------------------
+   6) KART
+------------------------------------------------------------------*/
+const ORIGINAL_COORDS = {};
+SPOTS.forEach(s=>{ ORIGINAL_COORDS[s.name] = {lat:s.lat, lng:s.lng, approx:!!s.approx, unknownPos:!!s.unknownPos}; });
+
+let surfMap = null;
+let osmLayer = null;
+let satLayer = null;
+let currentMapType = "street";
+const mapMarkers = {};
+let editingPositions = false;
+let featuredSpotName = null; // null = auto-show today's best spot; else a user-picked spot name
+
+function markerColor(spot, result){
+  if(!result) return "#9aa8ae";
+  if(result.closedNow) return "var(--closed)".startsWith("var")? "#6b6b6b" : result;
+  if(result.overall>=0.72) return "#1e9e6a";
+  if(result.overall>=0.45) return "#c98a1a";
+  return "#b5462f";
+}
+function buildDivIcon(spot, color){
+  const cls = "spot-marker" + (spot.approx ? " approx":"") + (spot.unknownPos ? " unknown":"");
+  const style = spot.approx
+    ? `border-color:${color};background:#fff;`
+    : `background:${color};`;
+  return L.divIcon({
+    className:"",
+    html:`<div class="${cls}" style="${style}"></div>`,
+    iconSize:[18,18],
+    iconAnchor:[9,9],
+    popupAnchor:[0,-10]
+  });
+}
+function popupHtml(spot, result){
+  const badge = result ? badgeFor(result.overall, result.closedNow) : {label:"–"};
+  const posNote = spot.unknownPos
+    ? '<br><i>Posisjon ukjent – dra pinnen til riktig sted.</i>'
+    : (spot.approx ? '<br><i>Anslått posisjon.</i>' : '');
+  return `<b>${spot.name}</b> ${stars(spot.level)}<br>${badge.label}<br>${spot.comment}${posNote}`;
+}
+function initMap(){
+  if(typeof L === "undefined") return;
+  surfMap = L.map("surfMap", {scrollWheelZoom:false}).setView([58.73,5.62], 10);
+  osmLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap-bidragsytere",
+    maxZoom:19
+  });
+  satLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+    attribution: "Kartdata: Esri, Maxar, Earthstar Geographics",
+    maxZoom:19
+  });
+  osmLayer.addTo(surfMap);
+
+  // Container is laid out via flexbox (half-width) after Leaflet measures it once,
+  // so force a resize check once layout has settled to avoid a misaligned tile grid.
+  setTimeout(()=>surfMap.invalidateSize(), 0);
+  setTimeout(()=>surfMap.invalidateSize(), 300);
+  window.addEventListener("resize", ()=>{ if(surfMap) surfMap.invalidateSize(); });
+
+  SPOTS.forEach(spot=>{
+    const marker = L.marker([spot.lat, spot.lng], {icon: buildDivIcon(spot, "#9aa8ae"), draggable:false});
+    marker.addTo(surfMap);
+    marker.bindPopup(popupHtml(spot, null));
+    marker.on("click", ()=>highlightCard(spot));
+    marker.on("dragend", ()=>{
+      const pos = marker.getLatLng();
+      spot.lat = Math.round(pos.lat*10000)/10000;
+      spot.lng = Math.round(pos.lng*10000)/10000;
+      spot.approx = false;
+      spot.unknownPos = false;
+      marker.setIcon(buildDivIcon(spot, markerColor(spot, lastScoreFor(spot))));
+      updateCoordOutput();
+    });
+    mapMarkers[spot.name] = marker;
+  });
+}
+function setMapType(type){
+  if(!surfMap || type === currentMapType) return;
+  if(type === "sat"){
+    if(surfMap.hasLayer(osmLayer)) surfMap.removeLayer(osmLayer);
+    satLayer.addTo(surfMap);
+  } else {
+    if(surfMap.hasLayer(satLayer)) surfMap.removeLayer(satLayer);
+    osmLayer.addTo(surfMap);
+  }
+  currentMapType = type;
+  const streetBtn = document.getElementById("btnMapStreet");
+  const satBtn = document.getElementById("btnMapSat");
+  if(streetBtn) streetBtn.classList.toggle("active", type==="street");
+  if(satBtn) satBtn.classList.toggle("active", type==="sat");
+}
+let lastScored = [];
+function lastScoreFor(spot){
+  const hit = lastScored.find(x=>x.spot.name===spot.name);
+  return hit ? hit.result : null;
+}
+function updateMapMarkers(scored){
+  lastScored = scored;
+  if(!surfMap) return;
+  scored.forEach(({spot, result})=>{
+    const marker = mapMarkers[spot.name];
+    if(!marker) return;
+    marker.setIcon(buildDivIcon(spot, markerColor(spot, result)));
+    marker.setPopupContent(popupHtml(spot, result));
+    marker.setLatLng([spot.lat, spot.lng]);
+  });
+}
+function highlightCard(spot){
+  const el = document.getElementById("card-" + slug(spot.name));
+  if(!el) return;
+  el.scrollIntoView({behavior:"smooth", block:"center"});
+  el.classList.add("card-highlight");
+  setTimeout(()=>el.classList.remove("card-highlight"), 1800);
+}
+function focusMapOnSpot(slugName){
+  const spot = SPOTS.find(s=>slug(s.name)===slugName);
+  if(!spot) return;
+  featuredSpotName = spot.name;
+  renderMapFeature(lastScored);
+  const mapEl = document.getElementById("surfMap");
+  if(mapEl) mapEl.scrollIntoView({behavior:"smooth", block:"center"});
+  if(surfMap){
+    if(typeof surfMap.invalidateSize === "function") surfMap.invalidateSize();
+    if(typeof surfMap.flyTo === "function"){
+      surfMap.flyTo([spot.lat, spot.lng], 15, {duration:0.8});
+    } else {
+      surfMap.setView([spot.lat, spot.lng], 15);
+    }
+  }
+  const marker = mapMarkers[spot.name];
+  if(marker && typeof marker.openPopup === "function"){
+    setTimeout(()=>marker.openPopup(), 400);
+  }
+}
+function renderMapFeature(scored){
+  const el = document.getElementById("mapFeature");
+  if(!el || !scored || !scored.length) return;
+  let entry = featuredSpotName ? scored.find(x=>x.spot.name===featuredSpotName) : null;
+  const isAuto = !entry;
+  if(!entry) entry = scored[0];
+  const {spot, result} = entry;
+  const badge = badgeFor(result.overall, result.closedNow);
+  el.innerHTML = `
+    <div class="map-feature-label">${isAuto ? "🏆 Beste spot akkurat nå" : "📍 Valgt spot"}</div>
+    <div class="card-top">
+      <div>
+        <h3>${spot.name}</h3>
+        <div class="stars">${stars(spot.level)}</div>
+      </div>
+      <span class="badge ${badge.cls}">${badge.label}</span>
+    </div>
+    <div class="meter"><div style="width:${Math.round(result.overall*100)}%; background:${barColor(result.overall)};"></div></div>
+    <div class="facts">
+      <div><b>Beste svell:</b> ${toEnglishDir(spot.swell)}</div>
+      <div><b>Beste vind:</b> ${toEnglishDir(spot.wind)}</div>
+      <div><b>Bølgehøyde:</b> ${spot.hMin}–${spot.hMax} m</div>
+      <div><b>Tidevann:</b> ${spot.tide}</div>
+    </div>
+    <div class="comment">${spot.comment}</div>
+    <div class="where">📍 ${spot.where} · <button type="button" class="link-btn" onclick="focusMapOnSpot('${slug(spot.name)}')">🗺️ Vis i kart</button></div>
+    ${!isAuto ? `<button type="button" class="link-btn btn-show-best" id="btnShowBest">↺ Vis beste spot for nå</button>` : ""}
+  `;
+  if(!isAuto){
+    const btn = document.getElementById("btnShowBest");
+    if(btn) btn.addEventListener("click", ()=>{
+      featuredSpotName = null;
+      renderMapFeature(lastScored);
+    });
+  }
+}
+function togglePositionEditing(){
+  editingPositions = !editingPositions;
+  const btn = document.getElementById("btnEditPositions");
+  const panel = document.getElementById("editPanel");
+  Object.values(mapMarkers).forEach(m=>{
+    if(editingPositions) m.dragging.enable(); else m.dragging.disable();
+  });
+  btn.textContent = editingPositions ? "✅ Ferdig med posisjoner" : "✏️ Rediger posisjoner";
+  panel.classList.toggle("show", editingPositions);
+  if(editingPositions) updateCoordOutput();
+}
+function updateCoordOutput(){
+  const out = SPOTS.map(s=>({name:s.name, lat:s.lat, lng:s.lng})).map(s=>`  {name:"${s.name}", lat:${s.lat}, lng:${s.lng}}`).join(",\n");
+  document.getElementById("coordOutput").value = "[\n" + out + "\n]";
+}
+function copyCoordsToClipboard(){
+  updateCoordOutput();
+  const ta = document.getElementById("coordOutput");
+  ta.select();
+  const btn = document.getElementById("btnCopyCoords");
+  const showCopied = ()=>{
+    const original = "📋 Kopier koordinater";
+    btn.textContent = "✅ Kopiert!";
+    setTimeout(()=>{ btn.textContent = original; }, 1500);
+  };
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(ta.value).then(showCopied).catch(()=>{
+        try{ document.execCommand("copy"); showCopied(); }catch(e2){ /* teksten er markert, bruker kan Cmd/Ctrl+C selv */ }
+      });
+    } else if(document.execCommand){
+      document.execCommand("copy");
+      showCopied();
+    }
+  }catch(e){
+    // Klarte ikke kopiere automatisk - teksten er markert i feltet, bruker kan kopiere manuelt.
+  }
+}
+function resetCoords(){
+  SPOTS.forEach(s=>{
+    const orig = ORIGINAL_COORDS[s.name];
+    s.lat = orig.lat; s.lng = orig.lng; s.approx = orig.approx; s.unknownPos = orig.unknownPos;
+    const marker = mapMarkers[s.name];
+    if(marker) marker.setLatLng([s.lat, s.lng]);
+  });
+  updateMapMarkers(lastScored);
+  updateCoordOutput();
+}
+
+/* ---------------------------------------------------------------
+   6) Init
+------------------------------------------------------------------*/
+populateDirSelects();
+document.getElementById("btnFetch").addEventListener("click", fetchLiveConditions);
+document.getElementById("btnCalc").addEventListener("click", ()=>{ updateArrows(); render(); });
+document.getElementById("spotFilter").addEventListener("change", render);
+document.getElementById("hideClosed").addEventListener("change", render);
+document.getElementById("inSwellDir").addEventListener("change", updateArrows);
+document.getElementById("inWindDir").addEventListener("change", updateArrows);
+document.getElementById("btnEditPositions").addEventListener("click", togglePositionEditing);
+document.getElementById("btnMapStreet").addEventListener("click", ()=>setMapType("street"));
+document.getElementById("btnMapSat").addEventListener("click", ()=>setMapType("sat"));
+document.getElementById("btnCopyCoords").addEventListener("click", copyCoordsToClipboard);
+document.getElementById("btnResetCoords").addEventListener("click", resetCoords);
+
+initMap();
+fetchLiveConditions();
+</script>
+</body>
+</html>
