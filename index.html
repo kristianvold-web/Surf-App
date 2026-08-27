@@ -566,11 +566,11 @@
     <div class="cond-grid">
       <div class="cond-box">
         <label>Bølgehøyde, m</label>
-        <input type="number" id="inHeight" step="0.1" min="0" max="10">
+        <input type="text" inputmode="decimal" id="inHeight" placeholder="0,0">
       </div>
       <div class="cond-box">
         <label>Bølgeperiode, s</label>
-        <input type="number" id="inPeriod" step="0.5" min="0" max="25">
+        <input type="text" inputmode="decimal" id="inPeriod" placeholder="0,0">
       </div>
       <div class="cond-box">
         <label>Svellretning (fra)</label>
@@ -581,7 +581,7 @@
       </div>
       <div class="cond-box">
         <label>Vindstyrke, m/s</label>
-        <input type="number" id="inWindSpeed" step="0.5" min="0" max="40">
+        <input type="text" inputmode="decimal" id="inWindSpeed" placeholder="0,0">
       </div>
       <div class="cond-box">
         <label>Vindretning (fra)</label>
@@ -981,12 +981,22 @@ function updateMapCompass(swellDeg, windDeg){
   if(windEl && !isNaN(windDeg)) windEl.style.transform = `rotate(${(windDeg+180)%360}deg)`;
 }
 
+// Godtar både "5.1" og "5,1" - de frie tallfeltene (høyde/periode/vindstyrke) er
+// type="text" nettopp fordi mobilens taste-/tallbrett på norsk bruker komma som
+// desimaltegn, og en type="number"-input rapporterer verdien som tom streng (=> NaN)
+// hvis brukeren skriver komma i den.
+function parseLocaleNumber(v){
+  if(v===null || v===undefined) return NaN;
+  const s = String(v).trim().replace(",", ".");
+  if(s==="") return NaN;
+  return parseFloat(s);
+}
 function readInputsToCondition(){
   return {
-    height: parseFloat(document.getElementById("inHeight").value),
-    period: parseFloat(document.getElementById("inPeriod").value),
+    height: parseLocaleNumber(document.getElementById("inHeight").value),
+    period: parseLocaleNumber(document.getElementById("inPeriod").value),
     swellDir: parseFloat(document.getElementById("inSwellDir").value),
-    windSpeed: parseFloat(document.getElementById("inWindSpeed").value),
+    windSpeed: parseLocaleNumber(document.getElementById("inWindSpeed").value),
     windDir: parseFloat(document.getElementById("inWindDir").value),
   };
 }
