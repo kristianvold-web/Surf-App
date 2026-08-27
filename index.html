@@ -293,6 +293,26 @@
   .map-type-btn + .map-type-btn{border-left:1px solid var(--sea-light);}
   .map-type-btn.active{background:var(--sea);color:#fff;}
   .map-type-btn:hover:not(.active){background:var(--foam);}
+  .forecast-toggle{
+    display:inline-flex;
+    border:1px solid var(--sea-light);
+    border-radius:9px;
+    overflow:hidden;
+    margin-bottom:12px;
+  }
+  .forecast-day-btn{
+    border:none;
+    background:transparent;
+    color:var(--sea);
+    padding:8px 14px;
+    font-size:0.85rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .forecast-day-btn + .forecast-day-btn{border-left:1px solid var(--sea-light);}
+  .forecast-day-btn.active{background:var(--sea);color:#fff;}
+  .forecast-day-btn:hover:not(.active){background:var(--foam);}
   .map-row{
     display:flex;
     gap:16px;
@@ -494,7 +514,13 @@
 <div class="wrap">
 
   <div class="panel">
-    <h2>Forhold akkurat nå</h2>
+    <h2 id="condHeading">Forhold akkurat nå</h2>
+    <div class="forecast-toggle" role="group" aria-label="Velg tidspunkt">
+      <button type="button" class="forecast-day-btn active" data-days="0">Nå</button>
+      <button type="button" class="forecast-day-btn" data-days="1">+1 dag</button>
+      <button type="button" class="forecast-day-btn" data-days="2">+2 dager</button>
+      <button type="button" class="forecast-day-btn" data-days="3">+3 dager</button>
+    </div>
     <div class="cond-grid">
       <div class="cond-box">
         <label>Bølgehøyde, m</label>
@@ -753,37 +779,94 @@ function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
 const LAT = 58.73, LON = 5.57; // representativt punkt, sentralt på Jæren (Reve/Bore)
 let condition = {height:null, period:null, swellDir:null, windSpeed:null, windDir:null};
 
+let forecastDayOffset = 0; // 0 = na (live "current"), 1-3 = dager frem (hourly forecast)
+
+function findClosestHourlyIndex(timesArr, targetDate){
+  if(!timesArr || !timesArr.length) return -1;
+  let bestIdx = 0, bestDiff = Infinity;
+  for(let i=0;i<timesArr.length;i++){
+    const t = new Date(timesArr[i]);
+    const diff = Math.abs(t.getTime() - targetDate.getTime());
+    if(diff < bestDiff){ bestDiff = diff; bestIdx = i; }
+  }
+  return bestIdx;
+}
+
 async function fetchLiveConditions(){
   const statusEl = document.getElementById("statusText");
   const errEl = document.getElementById("errBox");
   errEl.style.display="none";
-  statusEl.textContent = "Henter live data …";
+  const dayOffset = forecastDayOffset;
+  const isForecast = dayOffset > 0;
+  statusEl.textContent = isForecast
+    ? `Henter prognose (+${dayOffset} dag${dayOffset>1?"er":""}) …`
+    : "Henter live data …";
   try{
-    const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&current=swell_wave_height,swell_wave_direction,swell_wave_period,wave_height&timezone=Europe%2FOslo`;
-    const windUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=wind_speed_10m,wind_direction_10m&wind_speed_unit=ms&timezone=Europe%2FOslo`;
+    const forecastDays = Math.max(dayOffset+1, 1);
+    const hourlyMarineParam = isForecast ? "&hourly=swell_wave_height,swell_wave_direction,swell_wave_period,wave_height" : "";
+    const hourlyWindParam = isForecast ? "&hourly=wind_speed_10m,wind_direction_10m" : "";
+    const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&current=swell_wave_height,swell_wave_direction,swell_wave_period,wave_height${hourlyMarineParam}&forecast_days=${forecastDays}&timezone=Europe%2FOslo`;
+    const windUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=wind_speed_10m,wind_direction_10m${hourlyWindParam}&wind_speed_unit=ms&forecast_days=${forecastDays}&timezone=Europe%2FOslo`;
 
     const [marineRes, windRes] = await Promise.all([fetch(marineUrl), fetch(windUrl)]);
     if(!marineRes.ok || !windRes.ok) throw new Error("Nettverksfeil mot Open-Meteo");
     const marine = await marineRes.json();
     const wind = await windRes.json();
 
-    const mc = marine.current || {};
-    const wc = wind.current || {};
+    if(!isForecast){
+      const mc = marine.current || {};
+      const wc = wind.current || {};
 
-    condition.height = (mc.swell_wave_height ?? mc.wave_height ?? null);
-    condition.period = (mc.swell_wave_period ?? null);
-    condition.swellDir = (mc.swell_wave_direction ?? null);
-    condition.windSpeed = (wc.wind_speed_10m ?? null);
-    condition.windDir = (wc.wind_direction_10m ?? null);
+      condition.height = (mc.swell_wave_height ?? mc.wave_height ?? null);
+      condition.period = (mc.swell_wave_period ?? null);
+      condition.swellDir = (mc.swell_wave_direction ?? null);
+      condition.windSpeed = (wc.wind_speed_10m ?? null);
+      condition.windDir = (wc.wind_direction_10m ?? null);
 
-    fillInputsFromCondition();
-    statusEl.textContent = "Sist oppdatert: " + new Date().toLocaleTimeString("no-NO",{hour:"2-digit",minute:"2-digit"}) + " (Open-Meteo, sentralt punkt på Jæren)";
+      fillInputsFromCondition();
+      statusEl.textContent = "Sist oppdatert: " + new Date().toLocaleTimeString("no-NO",{hour:"2-digit",minute:"2-digit"}) + " (Open-Meteo, sentralt punkt på Jæren)";
+    } else {
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + dayOffset);
+
+      const mh = marine.hourly || {};
+      const wh = wind.hourly || {};
+      const idx = findClosestHourlyIndex(mh.time, targetDate);
+      const widx = findClosestHourlyIndex(wh.time, targetDate);
+
+      condition.height = (idx>=0 && mh.swell_wave_height) ? (mh.swell_wave_height[idx] ?? (mh.wave_height ? mh.wave_height[idx] : null)) : null;
+      condition.period = (idx>=0 && mh.swell_wave_period) ? mh.swell_wave_period[idx] : null;
+      condition.swellDir = (idx>=0 && mh.swell_wave_direction) ? mh.swell_wave_direction[idx] : null;
+      condition.windSpeed = (widx>=0 && wh.wind_speed_10m) ? wh.wind_speed_10m[widx] : null;
+      condition.windDir = (widx>=0 && wh.wind_direction_10m) ? wh.wind_direction_10m[widx] : null;
+
+      fillInputsFromCondition();
+      const matchedTime = (idx>=0 && mh.time && mh.time[idx]) ? new Date(mh.time[idx]) : targetDate;
+      const timeLabel = matchedTime.toLocaleString("no-NO",{weekday:"short", day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"});
+      statusEl.textContent = `Prognose for ${timeLabel} (Open-Meteo, sentralt punkt på Jæren)`;
+    }
     render();
   }catch(e){
-    statusEl.textContent = "Klarte ikke hente live data.";
+    statusEl.textContent = isForecast ? "Klarte ikke hente prognosedata." : "Klarte ikke hente live data.";
     errEl.style.display="block";
     errEl.textContent = "Kunne ikke hente værdata akkurat nå (nettverk/CORS?). Du kan fylle inn forholdene manuelt under og trykke «Beregn anbefaling». Feil: " + e.message;
   }
+}
+
+function setForecastDayOffset(days){
+  forecastDayOffset = days;
+  document.querySelectorAll(".forecast-day-btn").forEach(function(b){
+    b.classList.toggle("active", parseInt(b.dataset.days,10) === days);
+  });
+  const heading = document.getElementById("condHeading");
+  if(heading){
+    heading.textContent = days === 0 ? "Forhold akkurat nå" : `Forhold om ${days} dag${days>1?"er":""}`;
+  }
+  const fetchBtn = document.getElementById("btnFetch");
+  if(fetchBtn){
+    fetchBtn.textContent = days === 0 ? "🔄 Hent live data" : `🔄 Hent prognose (+${days} dag${days>1?"er":""})`;
+  }
+  fetchLiveConditions();
 }
 
 function fillInputsFromCondition(){
@@ -1181,6 +1264,9 @@ function resetCoords(){
 ------------------------------------------------------------------*/
 populateDirSelects();
 document.getElementById("btnFetch").addEventListener("click", fetchLiveConditions);
+document.querySelectorAll(".forecast-day-btn").forEach(function(b){
+  b.addEventListener("click", function(){ setForecastDayOffset(parseInt(b.dataset.days,10)); });
+});
 document.getElementById("btnCalc").addEventListener("click", ()=>{ updateArrows(); render(); });
 document.getElementById("spotFilter").addEventListener("change", render);
 document.getElementById("hideClosed").addEventListener("change", render);
