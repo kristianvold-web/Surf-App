@@ -66,9 +66,11 @@
     border-radius:16px;
     box-shadow:var(--shadow);
     padding:20px 22px;
-    margin-top:-40px;
     margin-bottom:22px;
     border:1px solid var(--border);
+  }
+  .wrap > .panel:first-child{
+    margin-top:-40px;
   }
   .panel h2{
     margin:0 0 14px;
@@ -261,8 +263,8 @@
     display:none;
   }
   @media (max-width:600px){
-    header{padding-top:26px;}
-    .panel{margin-top:-28px;}
+    header{padding-top:26px; padding-bottom:60px;}
+    .wrap > .panel:first-child{margin-top:-28px;}
   }
 
   .map-panel .panel-head{
