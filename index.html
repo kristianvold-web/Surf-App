@@ -922,6 +922,12 @@ function render(){
   const geoSortFn = (a,b)=> b.spot.lat - a.spot.lat;
   const activeSort = isSortMode ? geoSortFn : sortFn;
 
+  // Always keep scoredAll itself sorted by score (regardless of the active grid
+  // filter/sort), so the map/feature box's "best spot" fallback (scored[0]) is
+  // always the genuine top-scoring spot for the current conditions - whether
+  // those conditions came from "Hent live data" or manual "Beregn anbefaling".
+  scoredAll.sort(sortFn);
+
   const kept = [], demoted = [];
   for(const item of scoredAll){
     const passes = (isSortMode || spotMatchesFilter(item.spot, filterValue)) && !(hideClosed && item.result.closedNow);
