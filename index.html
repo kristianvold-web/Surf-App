@@ -78,10 +78,17 @@
     color:var(--sea-dark);
   }
   .cond-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
-    gap:14px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
     margin-bottom:14px;
+  }
+  .cond-grid > .cond-box{
+    flex:1 1 140px;
+  }
+  .cond-grid > .cond-box.compact{
+    flex:0 0 auto;
+    width:100px;
   }
   .cond-box{
     background:var(--foam);
@@ -127,6 +134,45 @@
     color:var(--muted);
     pointer-events:none;
   }
+  .cond-box.compact{
+    padding:8px;
+    display:flex;
+    align-items:center;
+  }
+  .cond-box.compact .unit-field{
+    width:100%;
+  }
+  .cond-box.compact .unit-field input{
+    padding:6px 40px 6px 8px;
+    width:100%;
+  }
+  .cond-box.compact .unit-suffix{
+    right:26px;
+    font-size:0.78rem;
+  }
+  .mini-stepper{
+    position:absolute;
+    right:4px;
+    top:3px;
+    bottom:3px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:2px;
+  }
+  .mini-step-btn{
+    width:17px;
+    height:13px;
+    padding:0;
+    line-height:1;
+    font-size:8px;
+    border:1px solid var(--border);
+    border-radius:3px;
+    background:#fff;
+    color:var(--sea);
+    cursor:pointer;
+  }
+  .mini-step-btn:active{background:var(--foam);}
   .arrow{
     display:inline-block;
     width:16px;height:16px;
@@ -580,13 +626,25 @@
       <button type="button" class="forecast-day-btn" data-days="3">+3 dager</button>
     </div>
     <div class="cond-grid">
-      <div class="cond-box">
-        <label>Bølgehøyde, m</label>
-        <div class="unit-field"><input type="text" inputmode="decimal" id="inHeight" placeholder="0,0"><span class="unit-suffix">m</span></div>
+      <div class="cond-box compact">
+        <div class="unit-field">
+          <input type="text" inputmode="decimal" id="inHeight" placeholder="0,0" aria-label="Bølgehøyde, meter">
+          <span class="unit-suffix">m</span>
+          <span class="mini-stepper">
+            <button type="button" class="mini-step-btn" data-step-target="inHeight" data-step="0.1" data-dir="1" data-min="0" data-max="10" aria-label="Øk bølgehøyde">▲</button>
+            <button type="button" class="mini-step-btn" data-step-target="inHeight" data-step="0.1" data-dir="-1" data-min="0" data-max="10" aria-label="Reduser bølgehøyde">▼</button>
+          </span>
+        </div>
       </div>
-      <div class="cond-box">
-        <label>Bølgeperiode, s</label>
-        <div class="unit-field"><input type="text" inputmode="decimal" id="inPeriod" placeholder="0,0"><span class="unit-suffix">s</span></div>
+      <div class="cond-box compact">
+        <div class="unit-field">
+          <input type="text" inputmode="decimal" id="inPeriod" placeholder="0,0" aria-label="Bølgeperiode, sekunder">
+          <span class="unit-suffix">s</span>
+          <span class="mini-stepper">
+            <button type="button" class="mini-step-btn" data-step-target="inPeriod" data-step="0.5" data-dir="1" data-min="0" data-max="25" aria-label="Øk bølgeperiode">▲</button>
+            <button type="button" class="mini-step-btn" data-step-target="inPeriod" data-step="0.5" data-dir="-1" data-min="0" data-max="25" aria-label="Reduser bølgeperiode">▼</button>
+          </span>
+        </div>
       </div>
       <div class="cond-box">
         <label>Svellretning (fra)</label>
@@ -595,9 +653,15 @@
           <select id="inSwellDir"></select>
         </div>
       </div>
-      <div class="cond-box">
-        <label>Vindstyrke, m/s</label>
-        <div class="unit-field"><input type="text" inputmode="decimal" id="inWindSpeed" placeholder="0,0"><span class="unit-suffix">m/s</span></div>
+      <div class="cond-box compact">
+        <div class="unit-field">
+          <input type="text" inputmode="decimal" id="inWindSpeed" placeholder="0,0" aria-label="Vindstyrke, meter per sekund">
+          <span class="unit-suffix">m/s</span>
+          <span class="mini-stepper">
+            <button type="button" class="mini-step-btn" data-step-target="inWindSpeed" data-step="0.5" data-dir="1" data-min="0" data-max="40" aria-label="Øk vindstyrke">▲</button>
+            <button type="button" class="mini-step-btn" data-step-target="inWindSpeed" data-step="0.5" data-dir="-1" data-min="0" data-max="40" aria-label="Reduser vindstyrke">▼</button>
+          </span>
+        </div>
       </div>
       <div class="cond-box">
         <label>Vindretning (fra)</label>
@@ -1007,6 +1071,28 @@ function parseLocaleNumber(v){
   if(s==="") return NaN;
   return parseFloat(s);
 }
+// De kompakte tallfeltene (bølgehøyde/-periode, vindstyrke) har ikke lenger den
+// innebygde opp/ned-spinneren en type="number"-input gir, siden den ødela
+// komma-input (se parseLocaleNumber over). Disse små knappene erstatter den.
+function wireMiniSteppers(){
+  document.querySelectorAll(".mini-step-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      const input = document.getElementById(btn.dataset.stepTarget);
+      if(!input) return;
+      const step = parseFloat(btn.dataset.step);
+      const dir = parseFloat(btn.dataset.dir);
+      const min = parseFloat(btn.dataset.min);
+      const max = parseFloat(btn.dataset.max);
+      const current = parseLocaleNumber(input.value);
+      const base = isNaN(current) ? 0 : current;
+      let next = base + dir*step;
+      next = Math.min(max, Math.max(min, next));
+      const decimals = (String(step).split(".")[1] || "").length;
+      next = parseFloat(next.toFixed(decimals));
+      input.value = String(next).replace(".", ",");
+    });
+  });
+}
 function readInputsToCondition(){
   return {
     height: parseLocaleNumber(document.getElementById("inHeight").value),
@@ -1374,6 +1460,7 @@ document.getElementById("btnMapSat").addEventListener("click", ()=>setMapType("s
 document.getElementById("btnCopyCoords").addEventListener("click", copyCoordsToClipboard);
 document.getElementById("btnResetCoords").addEventListener("click", resetCoords);
 
+wireMiniSteppers();
 initMap();
 fetchLiveConditions();
 </script>
