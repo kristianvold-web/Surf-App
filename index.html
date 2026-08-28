@@ -111,6 +111,22 @@
     background:#fff;
     color:var(--text);
   }
+  .unit-field{
+    position:relative;
+  }
+  .unit-field input{
+    padding-right:34px;
+  }
+  .unit-field .unit-suffix{
+    position:absolute;
+    right:10px;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:0.85rem;
+    font-weight:600;
+    color:var(--muted);
+    pointer-events:none;
+  }
   .arrow{
     display:inline-block;
     width:16px;height:16px;
@@ -566,11 +582,11 @@
     <div class="cond-grid">
       <div class="cond-box">
         <label>Bølgehøyde, m</label>
-        <input type="text" inputmode="decimal" id="inHeight" placeholder="0,0">
+        <div class="unit-field"><input type="text" inputmode="decimal" id="inHeight" placeholder="0,0"><span class="unit-suffix">m</span></div>
       </div>
       <div class="cond-box">
         <label>Bølgeperiode, s</label>
-        <input type="text" inputmode="decimal" id="inPeriod" placeholder="0,0">
+        <div class="unit-field"><input type="text" inputmode="decimal" id="inPeriod" placeholder="0,0"><span class="unit-suffix">s</span></div>
       </div>
       <div class="cond-box">
         <label>Svellretning (fra)</label>
@@ -581,7 +597,7 @@
       </div>
       <div class="cond-box">
         <label>Vindstyrke, m/s</label>
-        <input type="text" inputmode="decimal" id="inWindSpeed" placeholder="0,0">
+        <div class="unit-field"><input type="text" inputmode="decimal" id="inWindSpeed" placeholder="0,0"><span class="unit-suffix">m/s</span></div>
       </div>
       <div class="cond-box">
         <label>Vindretning (fra)</label>
