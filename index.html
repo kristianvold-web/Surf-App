@@ -639,8 +639,8 @@
         </span>
       </div>
       <div class="btn-row">
-        <button class="btn btn-ghost" id="btnFetch">🔄 Hent live data</button>
-        <button class="btn btn-primary" id="btnCalc">Beregn anbefaling</button>
+        <button class="btn btn-ghost" id="btnFetch">🔄 Oppdater</button>
+        <button class="btn btn-primary" id="btnCalc">Beregn</button>
       </div>
     </div>
     <div class="cond-grid">
@@ -1009,7 +1009,7 @@ async function fetchLiveConditions(){
   }catch(e){
     statusEl.textContent = isForecast ? "Klarte ikke hente prognosedata." : "Klarte ikke hente live data.";
     errEl.style.display="block";
-    errEl.textContent = "Kunne ikke hente værdata akkurat nå (nettverk/CORS?). Du kan fylle inn forholdene manuelt under og trykke «Beregn anbefaling». Feil: " + e.message;
+    errEl.textContent = "Kunne ikke hente værdata akkurat nå (nettverk/CORS?). Du kan fylle inn forholdene manuelt under og trykke «Beregn». Feil: " + e.message;
   }
 }
 
@@ -1024,7 +1024,7 @@ function setForecastDayOffset(days){
   }
   const fetchBtn = document.getElementById("btnFetch");
   if(fetchBtn){
-    fetchBtn.textContent = days === 0 ? "🔄 Hent live data" : `🔄 Hent prognose (+${days} dag${days>1?"er":""})`;
+    fetchBtn.textContent = days === 0 ? "🔄 Oppdater" : `🔄 Oppdater (+${days})`;
   }
   fetchLiveConditions();
 }
