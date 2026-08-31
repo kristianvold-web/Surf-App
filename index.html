@@ -43,6 +43,11 @@
     margin:0 auto;
     padding:36px 20px 56px;
     color:#fff;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+  }
+  header:active{
+    opacity:.85;
   }
   header h1{
     margin:0 0 4px;
@@ -50,6 +55,11 @@
     display:flex;
     align-items:center;
     gap:10px;
+  }
+  header .reload-hint{
+    font-size:1.1rem;
+    opacity:.6;
+    margin-left:2px;
   }
   header p{
     margin:0;
@@ -633,8 +643,8 @@
 })();
 </script>
 
-<header>
-  <h1>🌊 Jæren Surfeguide</h1>
+<header id="pageHeader" role="button" tabindex="0" aria-label="Trykk for å oppdatere siden">
+  <h1>🌊 Jæren Surfeguide <span class="reload-hint" aria-hidden="true">↻</span></h1>
 </header>
 
 <div class="wrap">
@@ -1501,6 +1511,10 @@ document.getElementById("forecastDayDown").addEventListener("click", function(){
   setForecastDayOffset(Math.max(0, forecastDayOffset - 1));
 });
 document.getElementById("btnCalc").addEventListener("click", ()=>{ updateArrows(); render(); });
+document.getElementById("pageHeader").addEventListener("click", function(){ location.reload(); });
+document.getElementById("pageHeader").addEventListener("keydown", function(e){
+  if(e.key === "Enter" || e.key === " "){ e.preventDefault(); location.reload(); }
+});
 document.getElementById("spotFilter").addEventListener("change", render);
 document.getElementById("hideClosed").addEventListener("change", render);
 document.getElementById("inSwellDir").addEventListener("change", updateArrows);
