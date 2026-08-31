@@ -450,9 +450,9 @@
     position:absolute;
     top:0;
     left:0;
-    width:148px;
-    height:148px;
-    margin:-74px 0 0 -74px;
+    width:330px;
+    height:330px;
+    margin:-165px 0 0 -165px;
     z-index:1000;
     pointer-events:none;
     transition:left .2s ease, top .2s ease;
@@ -460,31 +460,31 @@
   .dir-compass-ring{
     position:absolute;
     top:50%; left:50%;
-    width:100px; height:100px;
-    margin:-50px 0 0 -50px;
+    width:210px; height:210px;
+    margin:-105px 0 0 -105px;
     border-radius:50%;
-    border:2px solid rgba(255,255,255,0.95);
-    box-shadow:0 1px 5px rgba(0,0,0,0.3);
+    border:3px solid rgba(255,255,255,0.95);
+    box-shadow:0 1px 6px rgba(0,0,0,0.3);
   }
   .dir-compass-ring-dashed{
     position:absolute;
     border-radius:50%;
     border:1px dashed rgba(255,255,255,0.75);
   }
-  .dir-compass-ring-dashed.r1{ top:50%; left:50%; width:66px; height:66px; margin:-33px 0 0 -33px; }
-  .dir-compass-ring-dashed.r2{ top:50%; left:50%; width:33px; height:33px; margin:-16.5px 0 0 -16.5px; }
+  .dir-compass-ring-dashed.r1{ top:50%; left:50%; width:139px; height:139px; margin:-69.5px 0 0 -69.5px; }
+  .dir-compass-ring-dashed.r2{ top:50%; left:50%; width:69px; height:69px; margin:-34.5px 0 0 -34.5px; }
   .dir-compass-radial{
     position:absolute;
     top:50%; left:50%;
     width:1px;
-    height:50px;
+    height:105px;
     background:repeating-linear-gradient(rgba(255,255,255,.8) 0 3px, transparent 3px 6px);
     transform-origin:top center;
   }
   .dir-compass-deg-label{
     position:absolute;
     top:50%; left:50%;
-    font-size:0.6rem;
+    font-size:0.9rem;
     font-weight:700;
     color:#fff;
     text-shadow:0 1px 2px rgba(0,0,0,0.6), 0 0 3px rgba(0,0,0,0.4);
@@ -494,11 +494,11 @@
   .dir-compass-center-dot{
     position:absolute;
     top:50%; left:50%;
-    width:6px; height:6px;
+    width:10px; height:10px;
     background:#fff;
     border-radius:50%;
     transform:translate(-50%,-50%);
-    box-shadow:0 0 0 2px rgba(255,255,255,0.3);
+    box-shadow:0 0 0 3px rgba(255,255,255,0.3);
   }
   .dir-compass-swell, .dir-compass-wind{
     position:absolute;
@@ -507,22 +507,22 @@
     transition:transform .2s ease, top .2s ease, left .2s ease;
   }
   .dir-compass-swell{
-    width:34px; height:34px;
-    margin:-17px 0 0 -17px;
+    width:76px; height:76px;
+    margin:-38px 0 0 -38px;
   }
   .dir-compass-wind{
-    width:16px; height:16px;
-    margin:-8px 0 0 -8px;
+    width:36px; height:36px;
+    margin:-18px 0 0 -18px;
   }
   @media (max-width:700px){
-    .dir-compass{ width:126px; height:126px; margin:-63px 0 0 -63px; }
-    .dir-compass-ring{ width:86px; height:86px; margin:-43px 0 0 -43px; }
-    .dir-compass-ring-dashed.r1{ width:57px; height:57px; margin:-28.5px 0 0 -28.5px; }
-    .dir-compass-ring-dashed.r2{ width:28px; height:28px; margin:-14px 0 0 -14px; }
-    .dir-compass-radial{ height:43px; }
-    .dir-compass-deg-label{ font-size:0.56rem; }
-    .dir-compass-swell{ width:30px; height:30px; margin:-15px 0 0 -15px; }
-    .dir-compass-wind{ width:14px; height:14px; margin:-7px 0 0 -7px; }
+    .dir-compass{ width:282px; height:282px; margin:-141px 0 0 -141px; }
+    .dir-compass-ring{ width:180px; height:180px; margin:-90px 0 0 -90px; }
+    .dir-compass-ring-dashed.r1{ width:119px; height:119px; margin:-59.5px 0 0 -59.5px; }
+    .dir-compass-ring-dashed.r2{ width:59px; height:59px; margin:-29.5px 0 0 -29.5px; }
+    .dir-compass-radial{ height:90px; }
+    .dir-compass-deg-label{ font-size:0.82rem; }
+    .dir-compass-swell{ width:65px; height:65px; margin:-32.5px 0 0 -32.5px; }
+    .dir-compass-wind{ width:31px; height:31px; margin:-15.5px 0 0 -15.5px; }
   }
   @media (max-width:700px){
     /* På mobil skal selve kartet ligge rett under Kart/Satellitt/Rediger posisjoner-knappene,
@@ -1162,7 +1162,7 @@ function initDirCompassGuides(){
   radialsEl.innerHTML = "";
   labelsEl.innerHTML = "";
   const radius = ring.offsetWidth / 2;
-  const labelR = radius + 14;
+  const labelR = radius + 26;
   for(let deg=0; deg<360; deg+=45){
     const line = document.createElement("div");
     line.className = "dir-compass-radial";
