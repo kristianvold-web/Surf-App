@@ -357,12 +357,22 @@
   .map-type-btn + .map-type-btn{border-left:1px solid var(--sea-light);}
   .map-type-btn.active{background:var(--sea);color:#fff;}
   .map-type-btn:hover:not(.active){background:var(--foam);}
+  .top-controls-row{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .top-controls-row .btn-row{
+    margin-top:0;
+  }
   .forecast-toggle{
     display:inline-flex;
     border:1px solid var(--sea-light);
     border-radius:9px;
     overflow:hidden;
-    margin-bottom:12px;
   }
   .forecast-day-btn{
     border:none;
@@ -618,11 +628,17 @@
 
   <div class="panel">
     <h2 id="condHeading">Forhold akkurat nå</h2>
-    <div class="forecast-toggle" role="group" aria-label="Velg tidspunkt">
-      <button type="button" class="forecast-day-btn active" data-days="0">Nå</button>
-      <button type="button" class="forecast-day-btn" data-days="1">+1 dag</button>
-      <button type="button" class="forecast-day-btn" data-days="2">+2 dager</button>
-      <button type="button" class="forecast-day-btn" data-days="3">+3 dager</button>
+    <div class="top-controls-row">
+      <div class="forecast-toggle" role="group" aria-label="Velg tidspunkt">
+        <button type="button" class="forecast-day-btn active" data-days="0">Nå</button>
+        <button type="button" class="forecast-day-btn" data-days="1">+1</button>
+        <button type="button" class="forecast-day-btn" data-days="2">+2</button>
+        <button type="button" class="forecast-day-btn" data-days="3">+3</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="btnFetch">🔄 Hent live data</button>
+        <button class="btn btn-primary" id="btnCalc">Beregn anbefaling</button>
+      </div>
     </div>
     <div class="cond-grid">
       <div class="cond-box compact">
@@ -683,10 +699,6 @@
 
     <div class="status-line">
       <span id="statusText">Henter live data …</span>
-      <div class="btn-row">
-        <button class="btn btn-ghost" id="btnFetch">🔄 Hent live data</button>
-        <button class="btn btn-primary" id="btnCalc">Beregn anbefaling</button>
-      </div>
     </div>
     <div class="err" id="errBox"></div>
 
