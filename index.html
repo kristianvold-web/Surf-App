@@ -368,25 +368,27 @@
   .top-controls-row .btn-row{
     margin-top:0;
   }
-  .forecast-toggle{
+  .forecast-stepper{
+    position:relative;
     display:inline-flex;
+    align-items:center;
+    background:#fff;
     border:1px solid var(--sea-light);
     border-radius:9px;
-    overflow:hidden;
+    padding:8px 34px 8px 14px;
+    min-width:46px;
   }
-  .forecast-day-btn{
-    border:none;
-    background:transparent;
-    color:var(--sea);
-    padding:8px 14px;
-    font-size:0.85rem;
-    font-weight:600;
-    cursor:pointer;
-    transition:background .15s ease, color .15s ease;
+  .forecast-stepper #forecastDayLabel{
+    color:var(--sea-dark);
+    font-size:0.9rem;
+    font-weight:700;
   }
-  .forecast-day-btn + .forecast-day-btn{border-left:1px solid var(--sea-light);}
-  .forecast-day-btn.active{background:var(--sea);color:#fff;}
-  .forecast-day-btn:hover:not(.active){background:var(--foam);}
+  .forecast-stepper .mini-stepper{
+    position:absolute;
+    right:5px;
+    top:4px;
+    bottom:4px;
+  }
   .map-row{
     display:flex;
     gap:16px;
@@ -629,11 +631,12 @@
   <div class="panel">
     <h2 id="condHeading">Forhold akkurat nå</h2>
     <div class="top-controls-row">
-      <div class="forecast-toggle" role="group" aria-label="Velg tidspunkt">
-        <button type="button" class="forecast-day-btn active" data-days="0">Nå</button>
-        <button type="button" class="forecast-day-btn" data-days="1">+1</button>
-        <button type="button" class="forecast-day-btn" data-days="2">+2</button>
-        <button type="button" class="forecast-day-btn" data-days="3">+3</button>
+      <div class="forecast-stepper" role="group" aria-label="Velg tidspunkt">
+        <span id="forecastDayLabel">Nå</span>
+        <span class="mini-stepper">
+          <button type="button" class="mini-step-btn" id="forecastDayUp" aria-label="Neste dag">▲</button>
+          <button type="button" class="mini-step-btn" id="forecastDayDown" aria-label="Forrige dag">▼</button>
+        </span>
       </div>
       <div class="btn-row">
         <button class="btn btn-ghost" id="btnFetch">🔄 Hent live data</button>
@@ -1010,11 +1013,11 @@ async function fetchLiveConditions(){
   }
 }
 
+const FORECAST_DAY_LABELS = {0:"Nå", 1:"+1", 2:"+2", 3:"+3"};
 function setForecastDayOffset(days){
   forecastDayOffset = days;
-  document.querySelectorAll(".forecast-day-btn").forEach(function(b){
-    b.classList.toggle("active", parseInt(b.dataset.days,10) === days);
-  });
+  const label = document.getElementById("forecastDayLabel");
+  if(label) label.textContent = FORECAST_DAY_LABELS[days] || `+${days}`;
   const heading = document.getElementById("condHeading");
   if(heading){
     heading.textContent = days === 0 ? "Forhold akkurat nå" : `Forhold om ${days} dag${days>1?"er":""}`;
@@ -1093,7 +1096,7 @@ function parseLocaleNumber(v){
 // innebygde opp/ned-spinneren en type="number"-input gir, siden den ødela
 // komma-input (se parseLocaleNumber over). Disse små knappene erstatter den.
 function wireMiniSteppers(){
-  document.querySelectorAll(".mini-step-btn").forEach(function(btn){
+  document.querySelectorAll(".mini-step-btn[data-step-target]").forEach(function(btn){
     btn.addEventListener("click", function(){
       const input = document.getElementById(btn.dataset.stepTarget);
       if(!input) return;
@@ -1475,8 +1478,11 @@ function resetCoords(){
 ------------------------------------------------------------------*/
 populateDirSelects();
 document.getElementById("btnFetch").addEventListener("click", fetchLiveConditions);
-document.querySelectorAll(".forecast-day-btn").forEach(function(b){
-  b.addEventListener("click", function(){ setForecastDayOffset(parseInt(b.dataset.days,10)); });
+document.getElementById("forecastDayUp").addEventListener("click", function(){
+  setForecastDayOffset(Math.min(3, forecastDayOffset + 1));
+});
+document.getElementById("forecastDayDown").addEventListener("click", function(){
+  setForecastDayOffset(Math.max(0, forecastDayOffset - 1));
 });
 document.getElementById("btnCalc").addEventListener("click", ()=>{ updateArrows(); render(); });
 document.getElementById("spotFilter").addEventListener("change", render);
