@@ -1485,6 +1485,15 @@ function initMap(){
   setTimeout(()=>surfMap.invalidateSize(), 0);
   setTimeout(()=>surfMap.invalidateSize(), 300);
   surfMap.on("move zoom resize", updateDirCompassPosition);
+  surfMap.on("dragstart", ()=>{
+    // Bruker panner kartet manuelt: løsne kompasset fra spotten og sentrer det i kartet,
+    // slik at det ikke kan havne utenfor kartet nar spott-prikken panners mot kanten.
+    if(compassMode === "follow"){
+      compassMode = "center";
+      compassAnchorSpot = null;
+      updateDirCompassPosition();
+    }
+  });
   window.addEventListener("resize", ()=>{
     if(surfMap) surfMap.invalidateSize();
     updateMapCompass(lastSwellDegForCompass, lastWindDegForCompass);
