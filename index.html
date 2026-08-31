@@ -1313,13 +1313,6 @@ function buildDivIcon(spot, color){
     popupAnchor:[0,-10]
   });
 }
-function popupHtml(spot, result){
-  const badge = result ? badgeFor(result.overall, result.closedNow) : {label:"–"};
-  const posNote = spot.unknownPos
-    ? '<br><i>Posisjon ukjent – dra pinnen til riktig sted.</i>'
-    : (spot.approx ? '<br><i>Anslått posisjon.</i>' : '');
-  return `<b>${spot.name}</b> ${stars(spot.level)}<br>${badge.label}<br>${spot.comment}${posNote}`;
-}
 function initMap(){
   if(typeof L === "undefined") return;
   surfMap = L.map("surfMap", {scrollWheelZoom:false}).setView([58.73,5.62], 10);
@@ -1342,7 +1335,6 @@ function initMap(){
   SPOTS.forEach(spot=>{
     const marker = L.marker([spot.lat, spot.lng], {icon: buildDivIcon(spot, "#9aa8ae"), draggable:false});
     marker.addTo(surfMap);
-    marker.bindPopup(popupHtml(spot, null));
     marker.on("click", ()=>highlightCard(spot));
     marker.on("dragend", ()=>{
       const pos = marker.getLatLng();
@@ -1383,7 +1375,6 @@ function updateMapMarkers(scored){
     const marker = mapMarkers[spot.name];
     if(!marker) return;
     marker.setIcon(buildDivIcon(spot, markerColor(spot, result)));
-    marker.setPopupContent(popupHtml(spot, result));
     marker.setLatLng([spot.lat, spot.lng]);
   });
 }
@@ -1408,10 +1399,6 @@ function focusMapOnSpot(slugName){
     } else {
       surfMap.setView([spot.lat, spot.lng], 14);
     }
-  }
-  const marker = mapMarkers[spot.name];
-  if(marker && typeof marker.openPopup === "function"){
-    setTimeout(()=>marker.openPopup(), 400);
   }
 }
 function renderMapFeature(scored){
