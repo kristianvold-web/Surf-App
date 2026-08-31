@@ -690,12 +690,6 @@
     </div>
     <div class="err" id="errBox"></div>
 
-    <div class="legend">
-      <span><strong>BB</strong> = Beachbreak (sandbunn)</span>
-      <span><strong>PB</strong> = Pointbreak (nes/odde)</span>
-      <span><strong>rev</strong> = Reef (stein/rev)</span>
-      <span><strong>★</strong>-skala: ★☆☆☆☆ nybegynner → ★★★★★ kun ekspert</span>
-    </div>
   </div>
 
   <div class="panel map-panel">
@@ -1130,6 +1124,16 @@ function barColor(score){
 function stars(level){
   return "★".repeat(level) + "☆".repeat(5-level);
 }
+// Skriver ut bunntypen med fullt navn i stedet for forkortelsen (BB/PB/rev) -
+// bindestrek/skråstrek-varianter som "PB/rev" (Point Seldom) slås opp del for del.
+const BREAK_TYPE_LABELS = {"bb":"Beachbreak", "pb":"Pointbreak", "rev":"Reef"};
+function breakTypeLabel(type){
+  if(!type) return "";
+  return type.split("/").map(function(part){
+    const key = part.trim().toLowerCase();
+    return BREAK_TYPE_LABELS[key] || part;
+  }).join("/");
+}
 
 // value like "level:3", "height:up", "pos:south", or "all"
 function spotMatchesFilter(spot, filterValue){
@@ -1167,7 +1171,7 @@ function buildCard(spot, result, isFilteredOut){
       <span class="badge ${badge.cls}">${badge.label}</span>
     </div>
     <div>
-      <span class="type-tag">${spot.type}</span>
+      <span class="type-tag">${breakTypeLabel(spot.type)}</span>
       ${spot.breakDir ? `<span class="type-tag">${spot.breakDir}</span>` : ""}
     </div>
     <div class="meter"><div style="width:${Math.round(result.overall*100)}%; background:${barColor(result.overall)};"></div></div>
