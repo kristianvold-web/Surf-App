@@ -1018,8 +1018,8 @@ async function fetchLiveConditions(){
 
       fillInputsFromCondition();
       const matchedTime = (idx>=0 && mh.time && mh.time[idx]) ? new Date(mh.time[idx]) : targetDate;
-      const timeLabel = matchedTime.toLocaleString("no-NO",{weekday:"short", day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"});
-      statusEl.textContent = `Prognose for ${timeLabel} (Open-Meteo, sentralt punkt på Jæren)`;
+      const timeLabel = matchedTime.toLocaleString("no-NO",{weekday:"short", day:"2-digit", month:"2-digit"});
+      statusEl.textContent = timeLabel;
     }
     render();
   }catch(e){
