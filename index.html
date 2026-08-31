@@ -344,10 +344,12 @@
   @media (max-width:600px){
     header{padding-top:18px;}
     .wrap > .panel:first-child{margin-top:-20px;}
-    .top-controls-row{gap:6px;}
-    .top-controls-row .btn-row{gap:6px;}
-    .top-controls-row .btn{padding:8px 10px; font-size:0.8rem;}
-    .forecast-stepper{padding:8px 28px 8px 10px; min-width:auto;}
+    .panel .top-controls-row{gap:4px; flex-wrap:nowrap;}
+    .top-controls-row .btn-row{gap:4px; flex-wrap:nowrap;}
+    .top-controls-row .btn{padding:6px 7px; font-size:0.72rem; white-space:nowrap;}
+    .panel .forecast-stepper{padding:6px 20px 6px 7px; min-width:auto; flex:0 0 auto;}
+    .panel .forecast-stepper #forecastDayLabel{font-size:0.76rem; white-space:nowrap;}
+    .panel .forecast-stepper .mini-stepper{right:2px;}
   }
 
   .map-panel .panel-head{
