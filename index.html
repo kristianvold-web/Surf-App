@@ -655,6 +655,16 @@
           </span>
         </div>
       </div>
+      <div class="cond-box compact">
+        <div class="unit-field">
+          <input type="text" inputmode="decimal" id="inSeaTemp" placeholder="0,0" aria-label="Sjøtemperatur, grader celsius">
+          <span class="unit-suffix">°C</span>
+          <span class="mini-stepper">
+            <button type="button" class="mini-step-btn" data-step-target="inSeaTemp" data-step="0.5" data-dir="1" data-min="-2" data-max="30" aria-label="Øk sjøtemperatur">▲</button>
+            <button type="button" class="mini-step-btn" data-step-target="inSeaTemp" data-step="0.5" data-dir="-1" data-min="-2" data-max="30" aria-label="Reduser sjøtemperatur">▼</button>
+          </span>
+        </div>
+      </div>
       <div class="cond-box">
         <label>Svellretning (fra)</label>
         <div class="row">
@@ -916,7 +926,7 @@ function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
    4) LIVE DATA — Open-Meteo (gratis, ingen nøkkel, CORS-vennlig)
 ------------------------------------------------------------------*/
 const LAT = 58.73, LON = 5.57; // representativt punkt, sentralt på Jæren (Reve/Bore)
-let condition = {height:null, period:null, swellDir:null, windSpeed:null, windDir:null};
+let condition = {height:null, period:null, swellDir:null, windSpeed:null, windDir:null, seaTemp:null};
 
 let forecastDayOffset = 0; // 0 = na (live "current"), 1-3 = dager frem (hourly forecast)
 
@@ -942,9 +952,9 @@ async function fetchLiveConditions(){
     : "Henter live data …";
   try{
     const forecastDays = Math.max(dayOffset+1, 1);
-    const hourlyMarineParam = isForecast ? "&hourly=swell_wave_height,swell_wave_direction,swell_wave_period,wave_height" : "";
+    const hourlyMarineParam = isForecast ? "&hourly=swell_wave_height,swell_wave_direction,swell_wave_period,wave_height,sea_surface_temperature" : "";
     const hourlyWindParam = isForecast ? "&hourly=wind_speed_10m,wind_direction_10m" : "";
-    const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&current=swell_wave_height,swell_wave_direction,swell_wave_period,wave_height${hourlyMarineParam}&forecast_days=${forecastDays}&timezone=Europe%2FOslo`;
+    const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&current=swell_wave_height,swell_wave_direction,swell_wave_period,wave_height,sea_surface_temperature${hourlyMarineParam}&forecast_days=${forecastDays}&timezone=Europe%2FOslo`;
     const windUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=wind_speed_10m,wind_direction_10m${hourlyWindParam}&wind_speed_unit=ms&forecast_days=${forecastDays}&timezone=Europe%2FOslo`;
 
     const [marineRes, windRes] = await Promise.all([fetch(marineUrl), fetch(windUrl)]);
@@ -961,6 +971,7 @@ async function fetchLiveConditions(){
       condition.swellDir = (mc.swell_wave_direction ?? null);
       condition.windSpeed = (wc.wind_speed_10m ?? null);
       condition.windDir = (wc.wind_direction_10m ?? null);
+      condition.seaTemp = (mc.sea_surface_temperature ?? null);
 
       fillInputsFromCondition();
       statusEl.textContent = "Sist oppdatert: " + new Date().toLocaleTimeString("no-NO",{hour:"2-digit",minute:"2-digit"}) + " (Open-Meteo, sentralt punkt på Jæren)";
@@ -978,6 +989,7 @@ async function fetchLiveConditions(){
       condition.swellDir = (idx>=0 && mh.swell_wave_direction) ? mh.swell_wave_direction[idx] : null;
       condition.windSpeed = (widx>=0 && wh.wind_speed_10m) ? wh.wind_speed_10m[widx] : null;
       condition.windDir = (widx>=0 && wh.wind_direction_10m) ? wh.wind_direction_10m[widx] : null;
+      condition.seaTemp = (idx>=0 && mh.sea_surface_temperature) ? mh.sea_surface_temperature[idx] : null;
 
       fillInputsFromCondition();
       const matchedTime = (idx>=0 && mh.time && mh.time[idx]) ? new Date(mh.time[idx]) : targetDate;
@@ -1012,6 +1024,7 @@ function fillInputsFromCondition(){
   if(condition.height!==null) document.getElementById("inHeight").value = round1(condition.height);
   if(condition.period!==null) document.getElementById("inPeriod").value = round1(condition.period);
   if(condition.windSpeed!==null) document.getElementById("inWindSpeed").value = round1(condition.windSpeed);
+  if(condition.seaTemp!==null) document.getElementById("inSeaTemp").value = round1(condition.seaTemp);
   if(condition.swellDir!==null) selectClosestDir("inSwellDir", condition.swellDir);
   if(condition.windDir!==null) selectClosestDir("inWindDir", condition.windDir);
   updateArrows();
@@ -1099,6 +1112,7 @@ function readInputsToCondition(){
     swellDir: parseFloat(document.getElementById("inSwellDir").value),
     windSpeed: parseLocaleNumber(document.getElementById("inWindSpeed").value),
     windDir: parseFloat(document.getElementById("inWindDir").value),
+    seaTemp: parseLocaleNumber(document.getElementById("inSeaTemp").value),
   };
 }
 
