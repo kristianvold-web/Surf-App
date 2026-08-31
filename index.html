@@ -1018,6 +1018,11 @@ function findClosestHourlyIndex(timesArr, targetDate){
 }
 
 async function fetchLiveConditions(){
+  // "Oppdater" skal løsne kompasset fra en eventuell valgt spot og sentrere det i kartet igjen
+  // (samme utgangspunkt som når appen åpnes for første gang).
+  compassMode = "center";
+  compassAnchorSpot = null;
+  updateDirCompassPosition();
   const statusEl = document.getElementById("statusText");
   const errEl = document.getElementById("errBox");
   errEl.style.display="none";
@@ -1144,15 +1149,24 @@ function updateArrows(){
 let lastSwellDegForCompass = NaN;
 let lastWindDegForCompass = NaN;
 function updateDirCompassPosition(){
-  // Plasserer kompasset midt oppå prikken til spotten det er knyttet til (compassAnchorSpot),
-  // og holder det der når kartet flyttes/zoomes.
+  // "follow"-modus: kompasset sitter oppå prikken til spotten det er knyttet til (compassAnchorSpot),
+  // og holder seg der når kartet flyttes/zoomes - aktiveres kun ved "Vis i kart".
+  // "center"-modus (standard): kompasset ligger midt i kartutsnittet, uavhengig av spotter -
+  // dette er utgangspunktet når appen åpnes, og gjenopprettes når "Oppdater" trykkes.
   const el = document.getElementById("dirCompass");
-  if(!el || !surfMap || !compassAnchorSpot) return;
-  const marker = mapMarkers[compassAnchorSpot.name];
-  if(!marker || typeof surfMap.latLngToContainerPoint !== "function") return;
-  const pt = surfMap.latLngToContainerPoint(marker.getLatLng());
-  el.style.left = pt.x + "px";
-  el.style.top = pt.y + "px";
+  const mapEl = document.getElementById("surfMap");
+  if(!el || !mapEl) return;
+  if(compassMode === "follow" && surfMap && compassAnchorSpot){
+    const marker = mapMarkers[compassAnchorSpot.name];
+    if(marker && typeof surfMap.latLngToContainerPoint === "function"){
+      const pt = surfMap.latLngToContainerPoint(marker.getLatLng());
+      el.style.left = pt.x + "px";
+      el.style.top = pt.y + "px";
+      return;
+    }
+  }
+  el.style.left = (mapEl.clientWidth/2) + "px";
+  el.style.top = (mapEl.clientHeight/2) + "px";
 }
 function initDirCompassGuides(){
   const radialsEl = document.getElementById("dirCompassRadials");
@@ -1390,7 +1404,8 @@ let currentMapType = "street";
 const mapMarkers = {};
 let editingPositions = false;
 let featuredSpotName = null; // null = auto-show today's best spot; else a user-picked spot name
-let compassAnchorSpot = null; // spot the wind/svell-kompasset on kartet currently sits on top of
+let compassAnchorSpot = null; // spot the wind/svell-kompasset on kartet currently sits on top of (kun brukt i "follow"-modus)
+let compassMode = "center"; // "center" = midt i kartet (standard) - "follow" = henger på compassAnchorSpot (kun etter "Vis i kart")
 
 function markerColor(spot, result){
   if(!result) return "#9aa8ae";
@@ -1493,7 +1508,10 @@ function focusMapOnSpot(slugName){
   const spot = SPOTS.find(s=>slug(s.name)===slugName);
   if(!spot) return;
   featuredSpotName = spot.name;
+  compassMode = "follow";
+  compassAnchorSpot = spot;
   renderMapFeature(lastScored);
+  updateDirCompassPosition();
   const mapEl = document.getElementById("surfMap");
   if(mapEl) mapEl.scrollIntoView({behavior:"smooth", block:"center"});
   if(surfMap){
@@ -1512,7 +1530,6 @@ function renderMapFeature(scored){
   const isAuto = !entry;
   if(!entry) entry = scored[0];
   const {spot, result} = entry;
-  compassAnchorSpot = spot;
   updateDirCompassPosition();
   const badge = badgeFor(result.overall, result.closedNow);
   el.innerHTML = `
