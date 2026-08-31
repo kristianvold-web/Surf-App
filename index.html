@@ -109,6 +109,13 @@
     align-items:center;
     gap:8px;
   }
+  .dir-box{
+    padding:8px 10px;
+  }
+  .dir-box .arrow{
+    width:22px;
+    height:22px;
+  }
   .cond-box input, .cond-box select{
     width:100%;
     border:1px solid var(--border);
@@ -688,18 +695,23 @@
           </span>
         </div>
       </div>
-      <div class="cond-box">
-        <label>Svellretning (fra)</label>
+      <div class="cond-box dir-box" aria-label="Svellretning (fra)">
         <div class="row">
-          <svg class="arrow" id="swellArrow" viewBox="0 0 24 24"><path d="M12 2 L18 14 L12 10.5 L6 14 Z" fill="#0f5f8c"/></svg>
-          <select id="inSwellDir"></select>
+          <svg class="arrow" id="swellArrow" viewBox="0 0 48 48">
+            <path d="M24,40 C16,36 32,32 24,28 C16,24 32,20 24,16" fill="none" stroke="#0f5f8c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M24,6 L31,18 L24,14 L17,18 Z" fill="#0f5f8c"/>
+          </svg>
+          <select id="inSwellDir" aria-label="Svellretning, fra"></select>
         </div>
       </div>
-      <div class="cond-box">
-        <label>Vindretning (fra)</label>
+      <div class="cond-box dir-box" aria-label="Vindretning (fra)">
         <div class="row">
-          <svg class="arrow" id="windArrow" viewBox="0 0 24 24"><path d="M12 2 L18 14 L12 10.5 L6 14 Z" fill="#c98a1a"/></svg>
-          <select id="inWindDir"></select>
+          <svg class="arrow" id="windArrow" viewBox="0 0 48 48">
+            <line x1="24" y1="40" x2="24" y2="16" stroke="#e04b3f" stroke-width="4" stroke-linecap="round"/>
+            <line x1="24" y1="38" x2="32" y2="31" stroke="#e04b3f" stroke-width="4" stroke-linecap="round"/>
+            <path d="M24,6 L31,18 L24,14 L17,18 Z" fill="#e04b3f"/>
+          </svg>
+          <select id="inWindDir" aria-label="Vindretning, fra"></select>
         </div>
       </div>
     </div>
