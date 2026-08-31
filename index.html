@@ -1404,9 +1404,9 @@ function focusMapOnSpot(slugName){
   if(surfMap){
     if(typeof surfMap.invalidateSize === "function") surfMap.invalidateSize();
     if(typeof surfMap.flyTo === "function"){
-      surfMap.flyTo([spot.lat, spot.lng], 15, {duration:0.8});
+      surfMap.flyTo([spot.lat, spot.lng], 14, {duration:0.8});
     } else {
-      surfMap.setView([spot.lat, spot.lng], 15);
+      surfMap.setView([spot.lat, spot.lng], 14);
     }
   }
   const marker = mapMarkers[spot.name];
