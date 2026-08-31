@@ -446,42 +446,91 @@
     border-radius:12px;
     border:1px solid var(--border);
   }
-  .wind-swell-compass{
+  .dir-compass{
     position:absolute;
     top:8px;
     right:8px;
+    width:148px;
+    height:148px;
     z-index:1000;
-    display:flex;
-    gap:10px;
-    background:rgba(255,255,255,0.88);
-    border:1px solid var(--border);
-    border-radius:10px;
-    padding:6px 10px;
-    box-shadow:0 1px 4px rgba(0,0,0,0.25);
     pointer-events:none;
   }
-  .compass-item{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:2px;
+  .dir-compass-backing{
+    position:absolute;
+    top:50%; left:50%;
+    width:128px; height:128px;
+    margin:-64px 0 0 -64px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.55);
+    box-shadow:0 1px 6px rgba(0,0,0,0.2);
   }
-  .compass-arrow{
-    width:26px;
-    height:26px;
-    display:block;
-    transition:transform .2s ease;
+  .dir-compass-ring{
+    position:absolute;
+    top:50%; left:50%;
+    width:100px; height:100px;
+    margin:-50px 0 0 -50px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,0.95);
+    box-shadow:0 1px 5px rgba(0,0,0,0.3);
   }
-  .compass-label{
-    font-size:0.62rem;
+  .dir-compass-ring-dashed{
+    position:absolute;
+    border-radius:50%;
+    border:1px dashed rgba(255,255,255,0.75);
+  }
+  .dir-compass-ring-dashed.r1{ top:50%; left:50%; width:66px; height:66px; margin:-33px 0 0 -33px; }
+  .dir-compass-ring-dashed.r2{ top:50%; left:50%; width:33px; height:33px; margin:-16.5px 0 0 -16.5px; }
+  .dir-compass-radial{
+    position:absolute;
+    top:50%; left:50%;
+    width:1px;
+    height:50px;
+    background:repeating-linear-gradient(rgba(255,255,255,.8) 0 3px, transparent 3px 6px);
+    transform-origin:top center;
+  }
+  .dir-compass-deg-label{
+    position:absolute;
+    top:50%; left:50%;
+    font-size:0.6rem;
     font-weight:700;
-    text-transform:uppercase;
-    letter-spacing:.02em;
-    color:var(--muted);
+    color:#fff;
+    text-shadow:0 1px 2px rgba(0,0,0,0.6), 0 0 3px rgba(0,0,0,0.4);
+    transform:translate(-50%,-50%);
+    white-space:nowrap;
+  }
+  .dir-compass-center-dot{
+    position:absolute;
+    top:50%; left:50%;
+    width:6px; height:6px;
+    background:#fff;
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    box-shadow:0 0 0 2px rgba(255,255,255,0.3);
+  }
+  .dir-compass-swell, .dir-compass-wind{
+    position:absolute;
+    top:50%; left:50%;
+    transform-origin:center center;
+    transition:transform .2s ease, top .2s ease, left .2s ease;
+  }
+  .dir-compass-swell{
+    width:34px; height:34px;
+    margin:-17px 0 0 -17px;
+  }
+  .dir-compass-wind{
+    width:16px; height:16px;
+    margin:-8px 0 0 -8px;
   }
   @media (max-width:700px){
-    .wind-swell-compass{ top:6px; right:6px; padding:5px 8px; gap:8px; }
-    .compass-arrow{ width:22px; height:22px; }
+    .dir-compass{ top:6px; right:6px; width:126px; height:126px; }
+    .dir-compass-backing{ width:110px; height:110px; margin:-55px 0 0 -55px; }
+    .dir-compass-ring{ width:86px; height:86px; margin:-43px 0 0 -43px; }
+    .dir-compass-ring-dashed.r1{ width:57px; height:57px; margin:-28.5px 0 0 -28.5px; }
+    .dir-compass-ring-dashed.r2{ width:28px; height:28px; margin:-14px 0 0 -14px; }
+    .dir-compass-radial{ height:43px; }
+    .dir-compass-deg-label{ font-size:0.56rem; }
+    .dir-compass-swell{ width:30px; height:30px; margin:-15px 0 0 -15px; }
+    .dir-compass-wind{ width:14px; height:14px; margin:-7px 0 0 -7px; }
   }
   @media (max-width:700px){
     /* På mobil skal selve kartet ligge rett under Kart/Satellitt/Rediger posisjoner-knappene,
@@ -748,22 +797,23 @@
       <div class="map-feature" id="mapFeature"></div>
       <div class="map-container-wrap">
         <div id="surfMap"></div>
-        <div class="wind-swell-compass" id="windSwellCompass" title="Pilene viser retningen vind og svell beveger seg mot (ikke hvor de kommer fra)">
-          <div class="compass-item">
-            <svg class="compass-arrow" id="compassSwellArrow" viewBox="0 0 48 48">
-              <path d="M24,40 C16,36 32,32 24,28 C16,24 32,20 24,17" fill="none" stroke="#0f5f8c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M24,2 L34,20 L24,15 L14,20 Z" fill="#0f5f8c"/>
-            </svg>
-            <span class="compass-label">Svell</span>
-          </div>
-          <div class="compass-item">
-            <svg class="compass-arrow" id="compassWindArrow" viewBox="0 0 48 48">
-              <line x1="24" y1="40" x2="24" y2="17" stroke="#e04b3f" stroke-width="4" stroke-linecap="round"/>
-              <line x1="24" y1="38" x2="32" y2="31" stroke="#e04b3f" stroke-width="4" stroke-linecap="round"/>
-              <path d="M24,2 L34,20 L24,15 L14,20 Z" fill="#e04b3f"/>
-            </svg>
-            <span class="compass-label">Vind</span>
-          </div>
+        <div class="dir-compass" id="dirCompass" title="Svell (blå) roterer i sentrum. Vind (rød) flytter seg rundt kanten til riktig retning og peker innover – begge viser hvilken vei bevegelsen går.">
+          <div class="dir-compass-backing"></div>
+          <div class="dir-compass-ring-dashed r1"></div>
+          <div class="dir-compass-ring-dashed r2"></div>
+          <div class="dir-compass-ring" id="dirCompassRing"></div>
+          <div id="dirCompassRadials"></div>
+          <div id="dirCompassLabels"></div>
+          <div class="dir-compass-center-dot"></div>
+          <svg class="dir-compass-swell" id="compassSwellArrow" viewBox="0 0 48 48">
+            <path d="M24,40 C16,36 32,32 24,28 C16,24 32,20 24,17" fill="none" stroke="#0f5f8c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M24,2 L34,20 L24,15 L14,20 Z" fill="#0f5f8c"/>
+          </svg>
+          <svg class="dir-compass-wind" id="compassWindArrow" viewBox="0 0 48 48">
+            <line x1="24" y1="40" x2="24" y2="17" stroke="#e04b3f" stroke-width="4" stroke-linecap="round"/>
+            <line x1="24" y1="38" x2="32" y2="31" stroke="#e04b3f" stroke-width="4" stroke-linecap="round"/>
+            <path d="M24,2 L34,20 L24,15 L14,20 Z" fill="#e04b3f"/>
+          </svg>
         </div>
       </div>
     </div>
@@ -1100,12 +1150,58 @@ function updateArrows(){
   if(!isNaN(windDeg)) document.getElementById("windArrow").style.transform = `rotate(${(windDeg+180)%360}deg)`;
   updateMapCompass(swellDeg, windDeg);
 }
+let lastSwellDegForCompass = NaN;
+let lastWindDegForCompass = NaN;
+function initDirCompassGuides(){
+  const radialsEl = document.getElementById("dirCompassRadials");
+  const labelsEl = document.getElementById("dirCompassLabels");
+  const ring = document.getElementById("dirCompassRing");
+  if(!radialsEl || !labelsEl || !ring) return;
+  radialsEl.innerHTML = "";
+  labelsEl.innerHTML = "";
+  const radius = ring.offsetWidth / 2;
+  const labelR = radius + 14;
+  for(let deg=0; deg<360; deg+=45){
+    const line = document.createElement("div");
+    line.className = "dir-compass-radial";
+    line.style.transform = `rotate(${deg}deg)`;
+    radialsEl.appendChild(line);
+
+    const rad = deg * Math.PI / 180;
+    const x = labelR * Math.sin(rad);
+    const y = -labelR * Math.cos(rad);
+    const label = document.createElement("div");
+    label.className = "dir-compass-deg-label";
+    label.style.left = `calc(50% + ${x}px)`;
+    label.style.top = `calc(50% + ${y}px)`;
+    label.textContent = deg + "°";
+    labelsEl.appendChild(label);
+  }
+}
 function updateMapCompass(swellDeg, windDeg){
-  // Kompasset på kartet viser hvilken vei vind/svell beveger seg (motsatt av "fra"-retningen over).
+  // Svell-pilen (blå) sitter i sentrum og roterer på stedet i den retningen bevegelsen går.
+  // Vind-pilen (rød) flytter seg til punktet på ringen som svarer til "fra"-retningen (samme
+  // grad som vises i Vindretning-boksen over) og peker innover mot sentrum - altså viser både
+  // hvor vinden kommer fra (posisjon) og hvilken vei den blåser (retning på selve pilen).
+  if(!isNaN(swellDeg)) lastSwellDegForCompass = swellDeg;
+  if(!isNaN(windDeg)) lastWindDegForCompass = windDeg;
   const swellEl = document.getElementById("compassSwellArrow");
   const windEl = document.getElementById("compassWindArrow");
-  if(swellEl && !isNaN(swellDeg)) swellEl.style.transform = `rotate(${(swellDeg+180)%360}deg)`;
-  if(windEl && !isNaN(windDeg)) windEl.style.transform = `rotate(${(windDeg+180)%360}deg)`;
+  const ring = document.getElementById("dirCompassRing");
+  if(!ring) return;
+  initDirCompassGuides();
+  if(swellEl && !isNaN(lastSwellDegForCompass)){
+    swellEl.style.transform = `rotate(${(lastSwellDegForCompass+180)%360}deg)`;
+  }
+  if(windEl && !isNaN(lastWindDegForCompass)){
+    const radius = ring.offsetWidth / 2;
+    const rad = lastWindDegForCompass * Math.PI / 180;
+    const x = radius * Math.sin(rad);
+    const y = -radius * Math.cos(rad);
+    windEl.style.left = `calc(50% + ${x}px)`;
+    windEl.style.top = `calc(50% + ${y}px)`;
+    windEl.style.transform = `rotate(${(lastWindDegForCompass+180)%360}deg)`;
+  }
 }
 
 // Godtar både "5.1" og "5,1" - de frie tallfeltene (høyde/periode/vindstyrke) er
@@ -1330,7 +1426,10 @@ function initMap(){
   // so force a resize check once layout has settled to avoid a misaligned tile grid.
   setTimeout(()=>surfMap.invalidateSize(), 0);
   setTimeout(()=>surfMap.invalidateSize(), 300);
-  window.addEventListener("resize", ()=>{ if(surfMap) surfMap.invalidateSize(); });
+  window.addEventListener("resize", ()=>{
+    if(surfMap) surfMap.invalidateSize();
+    updateMapCompass(lastSwellDegForCompass, lastWindDegForCompass);
+  });
 
   SPOTS.forEach(spot=>{
     const marker = L.marker([spot.lat, spot.lng], {icon: buildDivIcon(spot, "#9aa8ae"), draggable:false});
@@ -1514,6 +1613,7 @@ document.getElementById("btnResetCoords").addEventListener("click", resetCoords)
 
 wireMiniSteppers();
 initMap();
+initDirCompassGuides();
 fetchLiveConditions();
 </script>
 </body>
