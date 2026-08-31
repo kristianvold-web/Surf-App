@@ -710,10 +710,9 @@
 <div class="wrap">
 
   <div class="panel">
-    <h2 id="condHeading">Forhold akkurat nå</h2>
     <div class="top-controls-row">
       <div class="forecast-stepper" role="group" aria-label="Velg tidspunkt">
-        <span id="forecastDayLabel">Nå</span>
+        <span id="forecastDayLabel">Forhold nå</span>
         <span class="mini-stepper">
           <button type="button" class="mini-step-btn" id="forecastDayUp" aria-label="Neste dag">▲</button>
           <button type="button" class="mini-step-btn" id="forecastDayDown" aria-label="Forrige dag">▼</button>
@@ -1109,15 +1108,11 @@ async function fetchLiveConditions(){
   }
 }
 
-const FORECAST_DAY_LABELS = {0:"Nå", 1:"+1", 2:"+2", 3:"+3", 4:"+4", 5:"+5", 6:"+6", 7:"+7"};
+const FORECAST_DAY_LABELS = {0:"nå", 1:"+1", 2:"+2", 3:"+3", 4:"+4", 5:"+5", 6:"+6", 7:"+7"};
 function setForecastDayOffset(days){
   forecastDayOffset = days;
   const label = document.getElementById("forecastDayLabel");
-  if(label) label.textContent = FORECAST_DAY_LABELS[days] || `+${days}`;
-  const heading = document.getElementById("condHeading");
-  if(heading){
-    heading.textContent = days === 0 ? "Forhold akkurat nå" : `Forhold om ${days} dag${days>1?"er":""}`;
-  }
+  if(label) label.textContent = "Forhold " + (FORECAST_DAY_LABELS[days] || `+${days}`);
   const fetchBtn = document.getElementById("btnFetch");
   if(fetchBtn){
     fetchBtn.textContent = days === 0 ? "🔄 Oppdater" : `🔄 Oppdater (+${days})`;
