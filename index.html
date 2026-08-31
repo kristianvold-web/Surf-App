@@ -358,7 +358,26 @@
     gap:10px;
     margin-bottom:12px;
   }
+  .panel-head-title{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    flex:1 1 auto;
+  }
   .map-panel h2{margin:0;}
+  .spot-jump-select{
+    flex:1 1 130px;
+    min-width:0;
+    max-width:220px;
+    border:1px solid var(--sea-light);
+    border-radius:9px;
+    padding:8px 10px;
+    font-size:0.85rem;
+    font-weight:600;
+    color:var(--sea);
+    background:#fff;
+  }
   .map-type-toggle{
     display:inline-flex;
     border:1px solid var(--sea-light);
@@ -776,7 +795,12 @@
 
   <div class="panel map-panel">
     <div class="panel-head">
-      <h2>🗺️ Kart over spottene</h2>
+      <div class="panel-head-title">
+        <h2>🗺️ Kart over spottene</h2>
+        <select class="spot-jump-select" id="spotJumpSelect" aria-label="Hopp til spot på kartet">
+          <option value="">Velg spot …</option>
+        </select>
+      </div>
       <div class="btn-row">
         <div class="map-type-toggle" role="group" aria-label="Karttype">
           <button type="button" class="map-type-btn active" id="btnMapStreet">🗺️ Kart</button>
@@ -1125,6 +1149,22 @@ function populateDirSelects(){
       o.textContent = `${opt} (${DIR[opt]}°)`;
       sel.appendChild(o);
     });
+  });
+}
+function populateSpotJumpSelect(){
+  const sel = document.getElementById("spotJumpSelect");
+  if(!sel) return;
+  const sorted = [...SPOTS].sort((a,b)=>a.name.localeCompare(b.name, "no"));
+  sorted.forEach(spot=>{
+    const o = document.createElement("option");
+    o.value = slug(spot.name);
+    o.textContent = spot.name;
+    sel.appendChild(o);
+  });
+  sel.addEventListener("change", ()=>{
+    if(!sel.value) return;
+    focusMapOnSpot(sel.value);
+    sel.value = ""; // gå tilbake til plassholderen - fungerer som en "hopp til"-handling, ikke en varig valgt tilstand
   });
 }
 function selectClosestDir(id, deg){
@@ -1613,6 +1653,7 @@ function resetCoords(){
    6) Init
 ------------------------------------------------------------------*/
 populateDirSelects();
+populateSpotJumpSelect();
 document.getElementById("btnFetch").addEventListener("click", fetchLiveConditions);
 document.getElementById("forecastDayUp").addEventListener("click", function(){
   setForecastDayOffset(Math.min(7, forecastDayOffset + 1));
