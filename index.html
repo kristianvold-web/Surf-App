@@ -448,21 +448,14 @@
   }
   .dir-compass{
     position:absolute;
-    top:8px;
-    right:8px;
+    top:0;
+    left:0;
     width:148px;
     height:148px;
+    margin:-74px 0 0 -74px;
     z-index:1000;
     pointer-events:none;
-  }
-  .dir-compass-backing{
-    position:absolute;
-    top:50%; left:50%;
-    width:128px; height:128px;
-    margin:-64px 0 0 -64px;
-    border-radius:50%;
-    background:rgba(255,255,255,0.55);
-    box-shadow:0 1px 6px rgba(0,0,0,0.2);
+    transition:left .2s ease, top .2s ease;
   }
   .dir-compass-ring{
     position:absolute;
@@ -522,8 +515,7 @@
     margin:-8px 0 0 -8px;
   }
   @media (max-width:700px){
-    .dir-compass{ top:6px; right:6px; width:126px; height:126px; }
-    .dir-compass-backing{ width:110px; height:110px; margin:-55px 0 0 -55px; }
+    .dir-compass{ width:126px; height:126px; margin:-63px 0 0 -63px; }
     .dir-compass-ring{ width:86px; height:86px; margin:-43px 0 0 -43px; }
     .dir-compass-ring-dashed.r1{ width:57px; height:57px; margin:-28.5px 0 0 -28.5px; }
     .dir-compass-ring-dashed.r2{ width:28px; height:28px; margin:-14px 0 0 -14px; }
@@ -798,7 +790,6 @@
       <div class="map-container-wrap">
         <div id="surfMap"></div>
         <div class="dir-compass" id="dirCompass" title="Svell (blå) roterer i sentrum. Vind (rød) flytter seg rundt kanten til riktig retning og peker innover – begge viser hvilken vei bevegelsen går.">
-          <div class="dir-compass-backing"></div>
           <div class="dir-compass-ring-dashed r1"></div>
           <div class="dir-compass-ring-dashed r2"></div>
           <div class="dir-compass-ring" id="dirCompassRing"></div>
@@ -1152,6 +1143,17 @@ function updateArrows(){
 }
 let lastSwellDegForCompass = NaN;
 let lastWindDegForCompass = NaN;
+function updateDirCompassPosition(){
+  // Plasserer kompasset midt oppå prikken til spotten det er knyttet til (compassAnchorSpot),
+  // og holder det der når kartet flyttes/zoomes.
+  const el = document.getElementById("dirCompass");
+  if(!el || !surfMap || !compassAnchorSpot) return;
+  const marker = mapMarkers[compassAnchorSpot.name];
+  if(!marker || typeof surfMap.latLngToContainerPoint !== "function") return;
+  const pt = surfMap.latLngToContainerPoint(marker.getLatLng());
+  el.style.left = pt.x + "px";
+  el.style.top = pt.y + "px";
+}
 function initDirCompassGuides(){
   const radialsEl = document.getElementById("dirCompassRadials");
   const labelsEl = document.getElementById("dirCompassLabels");
@@ -1388,6 +1390,7 @@ let currentMapType = "street";
 const mapMarkers = {};
 let editingPositions = false;
 let featuredSpotName = null; // null = auto-show today's best spot; else a user-picked spot name
+let compassAnchorSpot = null; // spot the wind/svell-kompasset on kartet currently sits on top of
 
 function markerColor(spot, result){
   if(!result) return "#9aa8ae";
@@ -1426,9 +1429,11 @@ function initMap(){
   // so force a resize check once layout has settled to avoid a misaligned tile grid.
   setTimeout(()=>surfMap.invalidateSize(), 0);
   setTimeout(()=>surfMap.invalidateSize(), 300);
+  surfMap.on("move zoom resize", updateDirCompassPosition);
   window.addEventListener("resize", ()=>{
     if(surfMap) surfMap.invalidateSize();
     updateMapCompass(lastSwellDegForCompass, lastWindDegForCompass);
+    updateDirCompassPosition();
   });
 
   SPOTS.forEach(spot=>{
@@ -1507,6 +1512,8 @@ function renderMapFeature(scored){
   const isAuto = !entry;
   if(!entry) entry = scored[0];
   const {spot, result} = entry;
+  compassAnchorSpot = spot;
+  updateDirCompassPosition();
   const badge = badgeFor(result.overall, result.closedNow);
   el.innerHTML = `
     <div class="map-feature-label">${isAuto ? "🏆 Beste spot akkurat nå" : "📍 Valgt spot"}</div>
