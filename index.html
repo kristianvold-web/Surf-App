@@ -344,12 +344,10 @@
   @media (max-width:600px){
     header{padding-top:18px;}
     .wrap > .panel:first-child{margin-top:-20px;}
-    .panel .top-controls-row{gap:4px; flex-wrap:nowrap;}
-    .top-controls-row .btn-row{gap:4px; flex-wrap:nowrap;}
-    .top-controls-row .btn{padding:6px 7px; font-size:0.72rem; white-space:nowrap;}
-    .panel .forecast-stepper{padding:6px 20px 6px 7px; min-width:auto; flex:0 0 auto;}
-    .panel .forecast-stepper #forecastDayLabel{font-size:0.76rem; white-space:nowrap;}
-    .panel .forecast-stepper .mini-stepper{right:2px;}
+    .panel .top-controls-row{gap:3px; flex-wrap:nowrap;}
+    #forecastDaySelect{padding:6px 18px 6px 6px; font-size:0.7rem;}
+    .top-controls-row .btn-row{gap:3px; flex-wrap:nowrap;}
+    .top-controls-row .btn{padding:5px 5px; font-size:0.64rem; white-space:nowrap;}
     .map-panel .btn-row{gap:6px; flex-wrap:nowrap;}
     .map-panel .map-type-btn{padding:7px 8px; font-size:0.72rem; white-space:nowrap;}
     .map-panel .btn-row .btn{padding:7px 8px; font-size:0.72rem; white-space:nowrap;}
@@ -383,6 +381,12 @@
     color:var(--sea);
     background:#fff;
   }
+  #forecastDaySelect{
+    /* Viser alltid "Nå/Forecast" (nullstilles etter hvert valg), så boksen skal
+       aldri krympe under det den korte teksten faktisk trenger. */
+    flex:0 0 auto;
+    min-width:0;
+  }
   .map-type-toggle{
     display:inline-flex;
     border:1px solid var(--sea-light);
@@ -412,27 +416,6 @@
   }
   .top-controls-row .btn-row{
     margin-top:0;
-  }
-  .forecast-stepper{
-    position:relative;
-    display:inline-flex;
-    align-items:center;
-    background:#fff;
-    border:1px solid var(--sea-light);
-    border-radius:9px;
-    padding:8px 34px 8px 14px;
-    min-width:46px;
-  }
-  .forecast-stepper #forecastDayLabel{
-    color:var(--sea-dark);
-    font-size:0.9rem;
-    font-weight:700;
-  }
-  .forecast-stepper .mini-stepper{
-    position:absolute;
-    right:5px;
-    top:4px;
-    bottom:4px;
   }
   .map-row{
     display:flex;
@@ -716,13 +699,16 @@
 
   <div class="panel">
     <div class="top-controls-row">
-      <div class="forecast-stepper" role="group" aria-label="Velg tidspunkt">
-        <span id="forecastDayLabel">Forhold nå</span>
-        <span class="mini-stepper">
-          <button type="button" class="mini-step-btn" id="forecastDayUp" aria-label="Neste dag">▲</button>
-          <button type="button" class="mini-step-btn" id="forecastDayDown" aria-label="Forrige dag">▼</button>
-        </span>
-      </div>
+      <select class="spot-jump-select forecast-day-select" id="forecastDaySelect" aria-label="Velg dag for prognose">
+        <option value="0" selected>Nå/Forecast</option>
+        <option value="1">En dag frem</option>
+        <option value="2">To dager frem</option>
+        <option value="3">Tre dager frem</option>
+        <option value="4">Fire dager frem</option>
+        <option value="5">Fem dager frem</option>
+        <option value="6">Seks dager frem</option>
+        <option value="7">Syv dager frem</option>
+      </select>
       <div class="btn-row">
         <button class="btn btn-ghost" id="btnFetch">🔄 Oppdater</button>
         <button class="btn btn-primary" id="btnCalc">Beregn input</button>
@@ -1113,14 +1099,11 @@ async function fetchLiveConditions(){
   }
 }
 
-const FORECAST_DAY_LABELS = {0:"nå", 1:"+1", 2:"+2", 3:"+3", 4:"+4", 5:"+5", 6:"+6", 7:"+7"};
 function setForecastDayOffset(days){
   forecastDayOffset = days;
-  const label = document.getElementById("forecastDayLabel");
-  if(label) label.textContent = "Forhold " + (FORECAST_DAY_LABELS[days] || `+${days}`);
   const fetchBtn = document.getElementById("btnFetch");
   if(fetchBtn){
-    fetchBtn.textContent = days === 0 ? "🔄 Oppdater" : `🔄 Oppdater (+${days})`;
+    fetchBtn.textContent = days === 0 ? "🔄 Oppdater" : `🔄 Oppdater +${days}`;
   }
   fetchLiveConditions();
 }
@@ -1664,11 +1647,10 @@ function resetCoords(){
 populateDirSelects();
 populateSpotJumpSelect();
 document.getElementById("btnFetch").addEventListener("click", fetchLiveConditions);
-document.getElementById("forecastDayUp").addEventListener("click", function(){
-  setForecastDayOffset(Math.min(7, forecastDayOffset + 1));
-});
-document.getElementById("forecastDayDown").addEventListener("click", function(){
-  setForecastDayOffset(Math.max(0, forecastDayOffset - 1));
+document.getElementById("forecastDaySelect").addEventListener("change", function(){
+  const days = parseInt(this.value, 10) || 0;
+  setForecastDayOffset(days);
+  this.value = "0"; // tilbake til "Nå/Forecast" - fungerer som en handling, ikke en varig valgt tilstand (samme mønster som spot-jump-select)
 });
 document.getElementById("btnCalc").addEventListener("click", ()=>{ updateArrows(); render(); });
 document.getElementById("pageHeader").addEventListener("click", function(){ location.reload(); });
