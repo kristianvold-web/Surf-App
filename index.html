@@ -350,6 +350,9 @@
     .panel .forecast-stepper{padding:6px 20px 6px 7px; min-width:auto; flex:0 0 auto;}
     .panel .forecast-stepper #forecastDayLabel{font-size:0.76rem; white-space:nowrap;}
     .panel .forecast-stepper .mini-stepper{right:2px;}
+    .map-panel .btn-row{gap:6px; flex-wrap:nowrap;}
+    .map-panel .map-type-btn{padding:7px 8px; font-size:0.72rem; white-space:nowrap;}
+    .map-panel .btn-row .btn{padding:7px 8px; font-size:0.72rem; white-space:nowrap;}
   }
 
   .map-panel .panel-head{
@@ -807,7 +810,7 @@
           <button type="button" class="map-type-btn active" id="btnMapStreet">🗺️ Kart</button>
           <button type="button" class="map-type-btn" id="btnMapSat">🛰️ Satellitt</button>
         </div>
-        <button class="btn btn-ghost" id="btnEditPositions">✏️ Rediger posisjoner</button>
+        <button class="btn btn-ghost" id="btnEditPositions">✏️ Endre spot</button>
       </div>
     </div>
     <div class="map-row">
@@ -838,7 +841,7 @@
       <span><span class="dot" style="background:var(--ok)"></span>Mulig</span>
       <span><span class="dot" style="background:var(--bad)"></span>Ikke ideelt</span>
       <span><span class="dot" style="background:var(--closed)"></span>Stengt</span>
-      <span><span class="dot approx"></span>Anslått posisjon – klikk «Rediger posisjoner» for å dra pin til riktig sted</span>
+      <span><span class="dot approx"></span>Anslått posisjon – klikk «Endre spot» for å dra pin til riktig sted</span>
     </div>
     <div class="edit-panel" id="editPanel">
       <p>Dra pins til riktig sted på kartet. Trykk «Kopier koordinater» og lim inn svaret i chatten, så oppdaterer jeg spot-dataene permanent.</p>
@@ -1613,7 +1616,7 @@ function togglePositionEditing(){
   Object.values(mapMarkers).forEach(m=>{
     if(editingPositions) m.dragging.enable(); else m.dragging.disable();
   });
-  btn.textContent = editingPositions ? "✅ Ferdig med posisjoner" : "✏️ Rediger posisjoner";
+  btn.textContent = editingPositions ? "✅ Ferdig" : "✏️ Endre spot";
   panel.classList.toggle("show", editingPositions);
   if(editingPositions) updateCoordOutput();
 }
