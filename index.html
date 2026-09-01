@@ -381,12 +381,6 @@
     color:var(--sea);
     background:#fff;
   }
-  #forecastDaySelect{
-    /* Viser alltid "Nå/Forecast" (nullstilles etter hvert valg), så boksen skal
-       aldri krympe under det den korte teksten faktisk trenger. */
-    flex:0 0 auto;
-    min-width:0;
-  }
   .map-type-toggle{
     display:inline-flex;
     border:1px solid var(--sea-light);
@@ -1650,7 +1644,8 @@ document.getElementById("btnFetch").addEventListener("click", fetchLiveCondition
 document.getElementById("forecastDaySelect").addEventListener("change", function(){
   const days = parseInt(this.value, 10) || 0;
   setForecastDayOffset(days);
-  this.value = "0"; // tilbake til "Nå/Forecast" - fungerer som en handling, ikke en varig valgt tilstand (samme mønster som spot-jump-select)
+  // Ingen tilbakestilling her: boksen viser hvilken dag som er valgt (vanlig select-oppførsel).
+  // Å velge "Nå/Forecast" (value 0) hopper tilbake til dagens forhold.
 });
 document.getElementById("btnCalc").addEventListener("click", ()=>{ updateArrows(); render(); });
 document.getElementById("pageHeader").addEventListener("click", function(){ location.reload(); });
